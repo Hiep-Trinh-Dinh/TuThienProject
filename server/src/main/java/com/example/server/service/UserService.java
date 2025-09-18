@@ -19,7 +19,14 @@ public class UserService {
         User existing = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (user.getFullName() != null) existing.setFullName(user.getFullName());
-        if (user.getPhone() != null) existing.setPhone(user.getPhone());
+        if (user.getPhone() != null) {
+            String phone = user.getPhone().trim();
+            // Regex: bắt đầu bằng 0, dài 10–11 chữ số
+            if (!phone.matches("^0[0-9]{9,10}$")) {
+                throw new IllegalArgumentException("Invalid phone number format. Must start with 0 and have 10–11 digits.");
+            }
+            existing.setPhone(phone);
+        }
         return userRepository.save(existing);
     }
 

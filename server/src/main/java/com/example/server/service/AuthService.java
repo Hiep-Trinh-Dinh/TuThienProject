@@ -28,6 +28,11 @@ public class AuthService {
 //                .email(registerRequestDTO.getEmail())
 //                .passwordHash(passwordEncoder.encode(registerRequestDTO.getPassword()))
 //                .build();
+        String email = registerRequestDTO.getEmail().trim();
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        if (!email.matches(emailRegex)) {
+            throw new IllegalArgumentException("Invalid email format.");
+        }
         if(userRepository.findByEmail(registerRequestDTO.getEmail()).isPresent()){
             throw new IllegalArgumentException("Email address already exists");
         }
