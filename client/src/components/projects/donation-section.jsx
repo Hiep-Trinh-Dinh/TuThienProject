@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 import { Checkbox } from "../ui/checkbox"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Heart, CreditCard, Shield, Users } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 const donationAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000]
 
@@ -23,11 +23,11 @@ export function DonationSection({ project }) {
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-
+  const navigate = useNavigate();
   const finalAmount = isCustom ? Number.parseFloat(customAmount) || 0 : selectedAmount
-
   const handleDonate = async (e) => {
     e.preventDefault()
+
 
     if (!user) {
       // Redirect to login with return URL
@@ -38,6 +38,12 @@ export function DonationSection({ project }) {
 
     if (finalAmount < 50000) {
       alert("Số tiền quyên góp tối thiểu là 50,000 VNĐ")
+      return
+    }
+
+    if(!user.phone){
+      alert("Nhập đầy đủ thông tin trước khi quyên góp")
+      navigate(`/profile/${user.id}`);
       return
     }
 

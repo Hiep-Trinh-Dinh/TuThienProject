@@ -7,14 +7,19 @@ import Register from './components/auth/register-form'
 import Login from './components/auth/login-form'
 import About from './components/home/about-section'
 import ProjectDetailsPage from './app/projects/[id]/page'
+import { AuthProvider } from "./contexts/auth-context"
 import './styles/globals.css'
-
+import ProfileSection from './app/profile/profile-section'
+import ChangePassword from './app/profile/change-password'
 function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/profile/:id" element={<ProfileSection />} />
+        <Route path="/password/:id" element={<ChangePassword />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetailsPage />} />
         <Route path="/register" element={<Register />} />
@@ -23,6 +28,7 @@ function App() {
       </Routes>
       <Footer />
     </BrowserRouter>
+    </AuthProvider>
   )
 }
 

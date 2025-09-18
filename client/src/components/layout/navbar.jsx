@@ -2,13 +2,13 @@
 
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
-import { Link } from "react-router-dom"
-import { Heart, User, LogOut } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { Heart, User, LogOut , UserSquare, LockKeyholeIcon,  } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 
 export function Navbar() {
-  const { user, logout } = useAuth()
-
+  const { user, logout, isAuthenticated } = useAuth()
+  const navigate = useNavigate();
   return (
     <nav className="bg-white border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,19 +31,34 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            {user ? (
+            {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    {user.name}
+                    {user?.email || "User"}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
+                  <DropdownMenuItem onClick={()=>{navigate("/");logout();}} className="text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to={`/profile/${user.userId}`} className="flex items-center">
+                      <UserSquare className="h-4 w-4 mr-2" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to={`/password/${user.userId}`} className="flex items-center">
+                      <LockKeyholeIcon className="h-4 w-4 mr-2" />
+                      Change password
+                    </Link>
+                  </DropdownMenuItem>
+
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
