@@ -1,31 +1,55 @@
 "use client"
-
-import { useState } from "react"
-import { useAuth } from "../../contexts/auth-context"
+import api from "../../axiosConfig"
+import { useState} from "react"
+// import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Alert, AlertDescription } from "../ui/alert"
-import { Link } from "react-router-dom"
+import { Link,useNavigate } from "react-router-dom"
+import { useAuth } from "../../contexts/auth-context"
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  // const [email, setEmail] = useState("")
+  // const [password, setPassword] = useState("")
+  const { login } = useAuth()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  // const { login } = useAuth()
+  const navigate = useNavigate();
+  const [form, setForm] = useState({email:"",
+                                    password:""});
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name] : e.target.value});
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
-    const result = await login(email, password)
-
-    if (!result.success) {
-      setError(result.error)
+    try {
+      // const res = await api.post("/auth/login", form);
+      // localStorage.setItem("token", res.data.token);
+      // localStorage.setItem("charity-user", JSON.stringify(res.data.user));
+      // navigate("/");
+      const res = await api.post("/auth/login", form);
+      login(res.data.user);
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (error) {
+      if(error.response && error.response.status == 403){
+        alert("Incorrect email address or password.");
+      }else{
+        alert("Login failed. Please try again.");
+      }
     }
+    // const result = await login(email, password)
+
+    // if (!result.success) {
+    //   setError(result.error)
+    // }
 
     setLoading(false)
   }
@@ -49,8 +73,9 @@ export function LoginForm() {
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="Enter your email"
               required
             />
@@ -61,8 +86,9 @@ export function LoginForm() {
             <Input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
               placeholder="Enter your password"
               required
             />
@@ -71,6 +97,10 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}
           </Button>
+
+          {/* <Button type="submit" className="w-full">
+            Sign In
+          </Button> */}
 
           <div className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}

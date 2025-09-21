@@ -1,10 +1,10 @@
 -- Sample data for Charity Web Application - Projects Only
 -- Insert sample users first (required for foreign key constraint)
 INSERT INTO users (user_id, full_name, email, password_hash, role, phone, status, created_at) VALUES
-(1, 'Tổ chức từ thiện A', 'org1@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'user', '0123456789', 'active', NOW()),
-(2, 'Tổ chức từ thiện B', 'org2@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'user', '0987654321', 'active', NOW()),
-(3, 'Tổ chức từ thiện C', 'org3@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'user', '0912345678', 'active', NOW()),
-(4, 'Tổ chức từ thiện D', 'org4@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'user', '0923456789', 'active', NOW());
+(1, 'Tổ chức từ thiện A', 'org1@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'USER', '0123456789', 'ACTIVE', NOW()),
+(2, 'Tổ chức từ thiện B', 'org2@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'USER', '0987654321', 'ACTIVE', NOW()),
+(3, 'Tổ chức từ thiện C', 'org3@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'USER', '0912345678', 'ACTIVE', NOW()),
+(4, 'Tổ chức từ thiện D', 'org4@charity.org', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'USER', '0923456789', 'ACTIVE', NOW());
 
 -- Insert sample projects (matching the original schema)
 INSERT INTO projects (org_id, title, description, category, goal_amount, raised_amount, start_date, end_date, status, created_at) VALUES

@@ -1,45 +1,68 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "../../contexts/auth-context"
+// import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Alert, AlertDescription } from "../ui/alert"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import api from "../../axiosConfig"
+import { useAuth } from "../../contexts/auth-context"
 
 export function RegisterForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+
+  const [form, setForm] = useState({email:"",
+                                    password:"",
+                                    fullName:""});
+  const { register } = useAuth();
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name] : e.target.value});
+  }
+  // const [email, setEmail] = useState("")
+  // const [password, setPassword] = useState("")
+  // const [name, setName] = useState("")
+  const [confirmPassword , setConfirmPassword] = useState("")
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
+  // const [loading, setLoading] = useState(false)
+  // const { register } = useAuth()
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
 
-    if (password !== confirmPassword) {
+    if (form.password !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
+    // if (password.length < 6) {
+    //   setError("Password must be at least 6 characters")
+    //   return
+    // }
+
+    // setLoading(true)
+    // const result = await register(email, password, name)
+    try {
+      const res = await api.post("/auth/register", form);
+      register(res.data.user);
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (error) {
+      if(error.response && error.response.status === 403){
+        alert("User already exists");
+      }else{
+        alert("Signup failed. Please try again");
+      }
     }
+    // if (!result.success) {
+    //   setError(result.error)
+    // }
 
-    setLoading(true)
-    const result = await register(email, password, name)
-
-    if (!result.success) {
-      setError(result.error)
-    }
-
-    setLoading(false)
+    
   }
 
   return (
@@ -57,12 +80,13 @@ export function RegisterForm() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="fullName">Full Name</Label>
             <Input
               id="name"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="fullName"
+              value={form.name}
+              onChange={handleChange}
               placeholder="Enter your full name"
               required
             />
@@ -73,8 +97,9 @@ export function RegisterForm() {
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="Enter your email"
               required
             />
@@ -84,9 +109,10 @@ export function RegisterForm() {
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={handleChange}
               placeholder="Create a password"
               required
             />
@@ -97,15 +123,18 @@ export function RegisterForm() {
             <Input
               id="confirmPassword"
               type="password"
-              value={confirmPassword}
+              name="confirmPassword"
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          {/* <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create Account"}
+          </Button> */}
+          <Button type="submit" className="w-full" >
+            Create Account
           </Button>
 
           <div className="text-center text-sm text-muted-foreground">
