@@ -27,6 +27,4 @@ public class RegisterRequestDTO {
     )
     private String phone;
     private LocalDateTime createdAt;
-    private String Role;
-    private String Status;
 }

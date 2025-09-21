@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private static final Logger logger = Logger.getLogger(JwtFilter.class.getName());
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -44,20 +46,27 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 email = jwtUtil.extractEmail(jwt);
             } catch (ExpiredJwtException e) {
-                logger.warn("JWT expired");
+                logger.warning("JWT expired");
             } catch (Exception e) {
-                logger.warn("JWT invalid");
+                logger.warning("JWT invalid");
             }
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            System.out.println("🔍 JWT Filter - User details loaded: " + userDetails.getUsername());
+            System.out.println("🔍 JWT Filter - User authorities: " + userDetails.getAuthorities());
+            
             if (jwtUtil.validateToken(jwt)) {
+                System.out.println("🔍 JWT Filter - Token is valid, setting authentication");
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("🔍 JWT Filter - Authentication set successfully");
+            } else {
+                System.out.println("❌ JWT Filter - Token validation failed");
             }
         }
         filterChain.doFilter(request, response);

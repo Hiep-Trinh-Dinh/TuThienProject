@@ -48,9 +48,7 @@ export function RegisterForm() {
     // const result = await register(email, password, name)
     try {
       const res = await api.post("/auth/register", form);
-      register(res.data.user);
-      localStorage.setItem("token", res.data.token);
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       if(error.response && error.response.status === 403){
         alert("User already exists");
@@ -82,10 +80,10 @@ export function RegisterForm() {
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
             <Input
-              id="name"
+              id="fullName"
               type="text"
               name="fullName"
-              value={form.name}
+              value={form.fullName}
               onChange={handleChange}
               placeholder="Enter your full name"
               required

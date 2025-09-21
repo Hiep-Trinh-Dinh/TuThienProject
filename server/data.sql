@@ -8,9 +8,9 @@ CREATE TABLE users (
     full_name VARCHAR(100) NOT NULL,          -- Họ và tên đầy đủ
     email VARCHAR(100) UNIQUE NOT NULL,       -- Địa chỉ email (duy nhất, dùng để đăng nhập)
     password_hash VARCHAR(255) NOT NULL,      -- Mật khẩu đã mã hóa
-    role ENUM('ADMIN', 'USER') DEFAULT 'USER', -- Vai trò của người dùng
+    role ENUM('admin', 'user') DEFAULT 'user', -- Vai trò của người dùng (lowercase để match với backend)
     phone VARCHAR(20),                        -- Số điện thoại
-    status ENUM('ACTIVE', 'INACTIVE', 'BANNED') DEFAULT 'ACTIVE', -- Trạng thái tài khoản
+    status ENUM('active', 'inactive', 'banned') DEFAULT 'active', -- Trạng thái tài khoản (lowercase để match với backend)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Ngày tạo tài khoản
 );
 
