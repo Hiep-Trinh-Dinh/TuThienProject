@@ -45,7 +45,7 @@ public class AuthService {
         user.setEmail(registerRequestDTO.getEmail());
         user.setPhone(registerRequestDTO.getPhone());
         // Explicitly set default values
-        user.setRole(User.Role.USER);
+        user.setRole(User.Role.user);
         user.setStatus(User.Status.active);
         user.setCreatedAt(LocalDateTime.now());
         

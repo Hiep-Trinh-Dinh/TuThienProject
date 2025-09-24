@@ -29,7 +29,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", columnDefinition = "ENUM('admin', 'user') DEFAULT 'user'")
-    private Role role = Role.USER;
+    private Role role = Role.user;
 
     @Column(name = "phone", length = 20)
     private String phone;
@@ -42,7 +42,7 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum Role {
-        ADMIN, USER
+        admin, user
     }
 
     public enum Status {
