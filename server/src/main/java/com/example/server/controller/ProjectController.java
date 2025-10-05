@@ -1,6 +1,6 @@
 package com.example.server.controller;
 
-import com.example.server.dto.ProjectDTO;
+import com.example.server.dto.request.ProjectDTO;
 import com.example.server.entity.Project;
 import com.example.server.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;

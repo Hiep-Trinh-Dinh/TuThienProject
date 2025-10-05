@@ -1,4 +1,4 @@
-package com.example.server.dto;
+package com.example.server.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
+// User Update của user
 public class UpdateUserInfoRequestDTO {
     @NotBlank(message = "Full name cannot be empty")
     private String fullName;

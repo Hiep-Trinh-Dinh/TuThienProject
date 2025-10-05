@@ -27,7 +27,7 @@ function ChangePassword(){
             return
         }
         try {
-            const res = await api.patch(`/account/password/${id}`, formPwd);
+            const res = await api.patch(`/accounts/password/${id}`, formPwd);
             localStorage.removeItem("charity-user");
             localStorage.setItem("charity-user",JSON.stringify(res.data));
             alert("Successfully");

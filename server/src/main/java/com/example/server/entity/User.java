@@ -1,17 +1,20 @@
 package com.example.server.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,9 +30,8 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", columnDefinition = "ENUM('admin', 'user') DEFAULT 'user'")
-    private Role role = Role.user;
+    @ManyToMany
+    private Set<Role> roles;
 
     @Column(name = "phone", length = 20)
     private String phone;
@@ -41,9 +43,9 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public enum Role {
-        admin, user
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name="auth_provider")
+    private AuthenticationProvider authProvider;
 
     public enum Status {
         active, inactive, banned

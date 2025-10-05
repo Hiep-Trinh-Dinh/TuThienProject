@@ -1,43 +1,133 @@
 package com.example.server.service;
 
-import com.example.server.dto.PasswordDTO;
-import com.example.server.dto.UpdateUserInfoRequestDTO;
+import com.example.server.dto.request.PasswordRequestDTO;
+import com.example.server.dto.request.RegisterRequestDTO;
+import com.example.server.dto.request.UpdateUserInfoRequestDTO;
+import com.example.server.dto.request.UserUpdateRequest;
+import com.example.server.dto.response.UserResponse;
+import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.User;
+import com.example.server.exception.AppException;
+import com.example.server.exception.ErrorCode;
+import com.example.server.mapper.UserMapper;
+import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashSet;
+import java.util.List;
 
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class UserService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    UserRepository userRepository;
+    PasswordEncoder passwordEncoder;
+    UserMapper userMapper;
+    RoleRepository roleRepository;
 
-    public User updateUserById(Long id, UpdateUserInfoRequestDTO user){
+    public UserResponse createUser(RegisterRequestDTO request){
+        if(userRepository.findByEmail(request.getEmail()).isPresent()){
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
+        user.setAuthProvider(AuthenticationProvider.LOCAL);
+        user = userRepository.save(user);
+        return userMapper.toUserResponse(user);
+    }
+
+    // this update info function is designed for USER
+    @PreAuthorize("hasRole('user')")
+    public UserResponse updateUserById(Long id, UpdateUserInfoRequestDTO user){
         User existing = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (user.getFullName() != null) existing.setFullName(user.getFullName());
         if (user.getPhone() != null) {
             String phone = user.getPhone().trim();
             // Regex: bắt đầu bằng 0, dài 10–11 chữ số
             if (!phone.matches("^0[0-9]{9,10}$")) {
-                throw new IllegalArgumentException("Invalid phone number format. Must start with 0 and have 10–11 digits.");
+                throw new AppException(ErrorCode.PHONE_INVALID);
             }
             existing.setPhone(phone);
         }
-        return userRepository.save(existing);
+        return userMapper.toUserResponse(userRepository.save(existing));
     }
 
-    public User changePwdById(Long id, PasswordDTO pwd){
+    // this updating info function is designed for admin
+    @PreAuthorize("hasRole('admin')")
+    public UserResponse updateFullUserInfoById(UserUpdateRequest request, Long id){
         User existing = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (request.getFullName() != null) existing.setFullName(request.getFullName());
+        if (request.getPhone() != null) {
+            String phone = request.getPhone().trim();
+            // Regex: bắt đầu bằng 0, dài 10–11 chữ số
+            if (!phone.matches("^0[0-9]{9,10}$")) {
+                throw new AppException(ErrorCode.PHONE_INVALID);
+            }
+            existing.setPhone(phone);
+        }
+        if(!CollectionUtils.isEmpty(request.getRoles())){
+            var roles = roleRepository.findAllById(request.getRoles());
+            existing.setRoles(new HashSet<>(roles));
+        }
+        existing = userRepository.save(existing);
+        return userMapper.toUserResponse(existing);
+    }
+
+    @PreAuthorize("hasRole('user')")
+    public UserResponse changePwdById(Long id, PasswordRequestDTO pwd){
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (passwordEncoder.matches(pwd.getCurrentPassword(), existing.getPasswordHash())){
             existing.setPasswordHash(passwordEncoder.encode(pwd.getNewPassword()));
         }else{
-            throw new RuntimeException("Current password is not correct");
+            throw new AppException(ErrorCode.PASSWORD_INCORRECT);
         }
-        return userRepository.save(existing);
+        return userMapper.toUserResponse(userRepository.save(existing));
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    public List<UserResponse> getAllUsers(){
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    public UserResponse getUserByEmail(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
+    }
+
+    @PreAuthorize("hasRole('user')")
+    public UserResponse getUserInfo(){
+        var context = SecurityContextHolder.getContext();
+        String email = context.getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return UserResponse.builder()
+                .userId(user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
+                .authProvider(String.valueOf(user.getAuthProvider()))
+                .build();
     }
 }

@@ -3,11 +3,20 @@
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Link, useNavigate } from "react-router-dom"
-import { Heart, User, LogOut , UserSquare, LockKeyholeIcon,  } from "lucide-react"
+import { Heart, User, LogOut , UserSquare, LockKeyholeIcon, LogIn,  } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { useEffect } from "react"
 
 export function Navbar() {
-  const { user, logout, isAuthenticated } = useAuth()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      login(token);
+    }
+  }, []);
+  const { user, logout, login, isAuthenticated } = useAuth()
   const navigate = useNavigate();
   return (
     <nav className="bg-white border-b border-border sticky top-0 z-50">
@@ -36,11 +45,12 @@ export function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    {user?.email || "User"}
+                    {/* {user?.email || "User"} */}
+                    <strong>{user.fullName}</strong> 
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={()=>{navigate("/");logout();}} className="text-destructive">
+                  <DropdownMenuItem onClick={()=>{navigate("/");logout(localStorage.getItem("token"));}} className="text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
@@ -52,13 +62,16 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild>
+                  {user.authProvider === "LOCAL" ? 
+                  (<DropdownMenuItem asChild>
                     <Link to={`/password/${user.userId}`} className="flex items-center">
                       <LockKeyholeIcon className="h-4 w-4 mr-2" />
                       Change password
                     </Link>
-                  </DropdownMenuItem>
-
+                  </DropdownMenuItem>)
+                  :(
+                    ""
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

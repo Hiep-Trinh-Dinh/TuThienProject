@@ -1,4 +1,4 @@
-package com.example.server.dto;
+package com.example.server.dto.request;
 
 import com.example.server.entity.Project;
 import lombok.Data;

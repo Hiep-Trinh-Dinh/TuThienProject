@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
+import api from "../axiosConfig";
 
 const AuthContext = createContext(null)
 
@@ -18,18 +19,24 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const login = (userData) => {
+  const login = async (token) => {
+    localStorage.setItem("token", token)
+    const res = await api.get("/accounts/info");
+    const userData = res.data.result;
     setUser(userData)
-    localStorage.setItem("charity-user", JSON.stringify(userData))
+    // Lưu vào localStorage để dùng khi reload trang
+    localStorage.setItem("charity-user", JSON.stringify(userData));
   }
+
 
   const register = (userData) => {
     setUser(userData)
     localStorage.setItem("charity-user", JSON.stringify(userData))
   }
 
-  const logout = () => {
+  const logout = async (token) => {
     setUser(null)
+    const res = await api.post("/auth/logout",{token});
     localStorage.removeItem("charity-user")
     localStorage.removeItem("token")
   }

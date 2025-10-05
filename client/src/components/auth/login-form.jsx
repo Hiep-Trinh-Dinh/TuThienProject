@@ -1,6 +1,7 @@
 "use client"
 import api from "../../axiosConfig"
-import { useState} from "react"
+import { useState, useEffect} from "react"
+import { API_BASE_URL } from "../../../eslint.config"
 // import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
@@ -35,8 +36,7 @@ export function LoginForm() {
       // localStorage.setItem("charity-user", JSON.stringify(res.data.user));
       // navigate("/");
       const res = await api.post("/auth/login", form);
-      login(res.data.user);
-      localStorage.setItem("token", res.data.token);
+      login(res.data.token);
       navigate("/");
     } catch (error) {
       if(error.response && error.response.status == 403){
@@ -98,9 +98,12 @@ export function LoginForm() {
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          {/* <Button type="submit" className="w-full">
-            Sign In
-          </Button> */}
+          
+          <div className="text-center text-sm text-muted-foreground">
+            <a href = {`${API_BASE_URL}/oauth2/authorization/google`} className="text-primary hover:underline">
+              Login with Google
+            </a>
+          </div>
 
           <div className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}

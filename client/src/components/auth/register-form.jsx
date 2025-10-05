@@ -14,7 +14,7 @@ import { useAuth } from "../../contexts/auth-context"
 export function RegisterForm() {
 
   const [form, setForm] = useState({email:"",
-                                    password:"",
+                                    passwordHash:"",
                                     fullName:""});
   const { register } = useAuth();
   const handleChange = (e) => {
@@ -34,7 +34,7 @@ export function RegisterForm() {
     e.preventDefault()
     setError("")
 
-    if (form.password !== confirmPassword) {
+    if (form.passwordHash !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
@@ -47,7 +47,7 @@ export function RegisterForm() {
     // setLoading(true)
     // const result = await register(email, password, name)
     try {
-      const res = await api.post("/auth/register", form);
+      const res = await api.post("/accounts/register", form);
       navigate("/login");
     } catch (error) {
       if(error.response && error.response.status === 403){
@@ -106,10 +106,10 @@ export function RegisterForm() {
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
-              id="password"
-              name="password"
+              id="passwordHash"
+              name="passwordHash"
               type="password"
-              value={form.password}
+              value={form.passwordHash}
               onChange={handleChange}
               placeholder="Create a password"
               required

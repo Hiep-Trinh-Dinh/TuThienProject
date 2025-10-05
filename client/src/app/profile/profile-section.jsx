@@ -11,7 +11,6 @@ import api from "../../axiosConfig";
 
 function ProfileSection(){
     // change info form
-    window.scrollTo(0, 0);
     const [error, setError] = useState("")
     const {id} = useParams();
     const [form, setForm] = useState({
@@ -26,6 +25,7 @@ function ProfileSection(){
     }
     const userData = JSON.parse(localStorage.getItem("charity-user"));
     useEffect(()=>{
+        window.scrollTo(0, 0);
         const fetchUpdateUser = async ()=>{
             try {
                 setForm(userData);
@@ -40,9 +40,9 @@ function ProfileSection(){
     e.preventDefault();
     setError("")
     try {
-        const res = await api.patch(`/account/user/${id}`, form);
+        const res = await api.put(`/accounts/${id}`, form);
         localStorage.removeItem("charity-user");
-        localStorage.setItem("charity-user",JSON.stringify(res.data));
+        localStorage.setItem("charity-user",JSON.stringify(res.data.result));
         alert("Successfully");
     } catch (error) {
         if (error.response && error.response.status === 403) {

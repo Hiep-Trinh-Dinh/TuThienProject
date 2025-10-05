@@ -3,7 +3,7 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
-
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default defineConfig([
   globalIgnores(['dist']),
   {
