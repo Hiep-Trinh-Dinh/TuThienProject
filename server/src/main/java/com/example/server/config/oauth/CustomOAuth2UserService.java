@@ -3,8 +3,6 @@ package com.example.server.config.oauth;
 import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.Role;
 import com.example.server.entity.User;
-import com.example.server.exception.AppException;
-import com.example.server.exception.ErrorCode;
 import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -27,6 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
+        String clientName = userRequest.getClientRegistration().getClientName();
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String email = oAuth2User.getAttribute("email");
@@ -44,7 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setFullName(name);
-            newUser.setAuthProvider(AuthenticationProvider.GOOGLE);
+//            newUser.setAuthProvider(AuthenticationProvider.GOOGLE);
             newUser.setRoles(Set.of(role));
 
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -61,7 +60,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .map(Role::getName)
                 .orElse("user");
 
-        return new CustomOAuth2User(oAuth2User, roleName);
+        return new CustomOAuth2User(oAuth2User, roleName, clientName);
     }
 
 }

@@ -4,6 +4,7 @@ import com.example.server.entity.User;
 import com.example.server.exception.AppException;
 import com.example.server.exception.ErrorCode;
 import com.example.server.repository.UserRepository;
+import com.example.server.service.UserService;
 import com.example.server.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -29,6 +31,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
                 ()->new AppException(ErrorCode.USER_NOT_FOUND)
         );
+
+        // update auth_provider
+        userService.updateAuthProvider(authUser.getEmail(), authUser.getoAuth2ClientName());
 
         // Sinh JWT token
         String token = jwtUtil.generateToken(user);

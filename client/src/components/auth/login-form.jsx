@@ -104,6 +104,11 @@ export function LoginForm() {
               Login with Google
             </a>
           </div>
+          {/* <div className="text-center text-sm text-muted-foreground">
+            <a href = {`${API_BASE_URL}/oauth2/authorization/facebook`} className="text-primary hover:underline">
+              Login with Facebook
+            </a>
+          </div> */}
 
           <div className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
