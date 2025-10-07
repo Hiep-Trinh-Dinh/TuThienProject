@@ -1,12 +1,10 @@
 package com.example.server.dto.response;
 
-import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data

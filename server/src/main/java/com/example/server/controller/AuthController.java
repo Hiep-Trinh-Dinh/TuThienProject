@@ -5,7 +5,6 @@ import com.example.server.dto.request.LogoutRequest;
 import com.example.server.dto.response.ApiResponse;
 import com.example.server.dto.response.AuthResponse;
 import com.example.server.dto.request.LoginRequestDTO;
-import com.example.server.dto.request.RegisterRequestDTO;
 import com.example.server.dto.response.IntrospectResponse;
 import com.example.server.service.AuthService;
 import com.nimbusds.jose.JOSEException;

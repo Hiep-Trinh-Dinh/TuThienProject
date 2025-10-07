@@ -1,6 +1,5 @@
 package com.example.server.config.oauth;
 
-import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.Role;
 import com.example.server.entity.User;
 import com.example.server.repository.RoleRepository;
@@ -43,7 +42,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setFullName(name);
-//            newUser.setAuthProvider(AuthenticationProvider.GOOGLE);
             newUser.setRoles(Set.of(role));
 
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
