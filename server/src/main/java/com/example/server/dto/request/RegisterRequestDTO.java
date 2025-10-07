@@ -15,17 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterRequestDTO {
-    @NotBlank(message = "Full name cannot be empty")
+    @NotBlank(message = "FULL_NAME_EMPTY")
     private String fullName;
-    @NotBlank(message = "Email cannot be empty") @Email(message = "Invalid email format")
+    @NotBlank(message = "EMAIL_EMPTY") @Email(message = "INVALID_EMAIL")
     private String email;
-    @NotBlank(message = "Password cannot be empty")
+    @NotBlank(message = "PASSWORD_EMPTY")
     private String passwordHash;
-    @Pattern(
-            regexp = "^0[0-9]{9,10}$",
-            message = "Phone number must start with 0 and be 10–11 digits"
-    )
-    private String phone;
     private LocalDateTime createdAt;
-    private List<String> roles;
 }

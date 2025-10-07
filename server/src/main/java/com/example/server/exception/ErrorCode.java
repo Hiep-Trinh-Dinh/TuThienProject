@@ -12,10 +12,14 @@ public enum ErrorCode {
     UNAUTHENTICATED(1004,"unauthenticated",HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1005,"You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_KEY(1006,"Uncategorized",HttpStatus.BAD_REQUEST),
+    INVALID_EMAIL(1013,"Invalid email format", HttpStatus.BAD_REQUEST),
+    PHONE_INVALID(1008,"Phone number must start with 0 and be 10–11 digits", HttpStatus.INTERNAL_SERVER_ERROR),
     PERMISSION_NOT_FOUND(1007,"permission not found",HttpStatus.NOT_FOUND),
-    PHONE_INVALID(1008,"Phone number is invalid", HttpStatus.INTERNAL_SERVER_ERROR),
-    PASSWORD_INCORRECT(1003,"Password is not correct", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    PASSWORD_INCORRECT(1009,"Password is not correct", HttpStatus.INTERNAL_SERVER_ERROR),
+    EMAIL_EMPTY(1010,"Email cannot be empty", HttpStatus.BAD_REQUEST),
+    PASSWORD_EMPTY(1011,"Password cannot be empty", HttpStatus.BAD_REQUEST),
+    FULL_NAME_EMPTY(1012,"Full name cannot be empty",HttpStatus.BAD_REQUEST),
+    INCORRECT_LOGIN(1014,"Email or password is not correct. Please check again.", HttpStatus.NOT_FOUND)
     ;
 
     private int code;

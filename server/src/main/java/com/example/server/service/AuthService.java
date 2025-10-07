@@ -47,11 +47,11 @@ public class AuthService {
             System.out.println(" Authentication successful");
         } catch (Exception e) {
             System.out.println(" Authentication failed: " + e.getMessage());
-            throw e;
+            throw new AppException(ErrorCode.INCORRECT_LOGIN);
         }
         
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.INCORRECT_LOGIN));
 
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Role defaultRole = roleRepository.findByName("user")

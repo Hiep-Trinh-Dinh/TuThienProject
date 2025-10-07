@@ -25,7 +25,7 @@ public class AuthController {
 
     // đăng nhập
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequestDTO request){
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequestDTO request){
         return ResponseEntity.ok(authService.login(request));
     }
 
