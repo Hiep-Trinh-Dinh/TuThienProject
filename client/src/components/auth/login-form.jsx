@@ -27,29 +27,21 @@ export function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
+    setError(error)
 
+
+    setLoading(true)
     try {
-      // const res = await api.post("/auth/login", form);
-      // localStorage.setItem("token", res.data.token);
-      // localStorage.setItem("charity-user", JSON.stringify(res.data.user));
-      // navigate("/");
       const res = await api.post("/auth/login", form);
       login(res.data.token);
       navigate("/");
     } catch (error) {
-      if(error.response && error.response.status == 403){
-        alert("Incorrect email address or password.");
+      if(error.response && error.response.status == 400){
+        setError("Email address or password cannot be empty.");
       }else{
-        alert("Login failed. Please try again.");
+        setError("Login failed. Please try again.");
       }
     }
-    // const result = await login(email, password)
-
-    // if (!result.success) {
-    //   setError(result.error)
-    // }
 
     setLoading(false)
   }
@@ -77,7 +69,7 @@ export function LoginForm() {
               value={form.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              required
+              
             />
           </div>
 
@@ -90,7 +82,7 @@ export function LoginForm() {
               value={form.password}
               onChange={handleChange}
               placeholder="Enter your password"
-              required
+              
             />
           </div>
 
@@ -104,6 +96,11 @@ export function LoginForm() {
               Login with Google
             </a>
           </div>
+          {/* <div className="text-center text-sm text-muted-foreground">
+            <a href = {`${API_BASE_URL}/oauth2/authorization/facebook`} className="text-primary hover:underline">
+              Login with Facebook
+            </a>
+          </div> */}
 
           <div className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}

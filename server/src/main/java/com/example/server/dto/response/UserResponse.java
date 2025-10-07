@@ -1,6 +1,5 @@
 package com.example.server.dto.response;
 
-import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -21,5 +20,5 @@ public class UserResponse {
     User.Status status;
     LocalDateTime createdAt;
     String authProvider;
-//    Set<RoleResponse> roles;
+    Set<RoleResponse> roles;
 }

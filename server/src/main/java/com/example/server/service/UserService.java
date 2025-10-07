@@ -42,7 +42,6 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
         user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
-        user.setAuthProvider(AuthenticationProvider.LOCAL);
         user = userRepository.save(user);
         return userMapper.toUserResponse(user);
     }
@@ -113,7 +112,6 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    @PreAuthorize("hasRole('user')")
     public UserResponse getUserInfo(){
         var context = SecurityContextHolder.getContext();
         String email = context.getAuthentication().getName();
@@ -128,6 +126,15 @@ public class UserService {
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .authProvider(String.valueOf(user.getAuthProvider()))
+                .roles(null)
                 .build();
+    }
+
+    public void updateAuthProvider(String email, String authProviderName){
+        AuthenticationProvider authType = AuthenticationProvider.valueOf(authProviderName.toUpperCase());
+        User existing = userRepository.findByEmail(email)
+                .orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        existing.setAuthProvider(authType);
+        userRepository.save(existing);
     }
 }

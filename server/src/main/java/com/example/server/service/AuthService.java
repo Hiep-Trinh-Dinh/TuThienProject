@@ -4,9 +4,8 @@ import com.example.server.dto.request.IntrospectRequest;
 import com.example.server.dto.request.LogoutRequest;
 import com.example.server.dto.response.AuthResponse;
 import com.example.server.dto.request.LoginRequestDTO;
-import com.example.server.dto.request.RegisterRequestDTO;
 import com.example.server.dto.response.IntrospectResponse;
-import com.example.server.dto.response.RefreshResponse;
+import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.InvalidatedToken;
 import com.example.server.entity.Role;
 import com.example.server.entity.User;
@@ -16,27 +15,13 @@ import com.example.server.repository.InvalidatedTokenRepository;
 import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.util.JwtUtil;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.text.ParseException;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Slf4j
@@ -51,26 +36,22 @@ public class AuthService {
     JwtUtil jwtUtil;
     InvalidatedTokenRepository invalidatedTokenRepository;
 
-    @NonFinal
-    @Value("${jwt.secret}")
-    protected String SIGNER_KEY;
-
     public AuthResponse login(LoginRequestDTO loginRequestDTO){
-        System.out.println("🔍 Login attempt for email: " + loginRequestDTO.getEmail());
+        System.out.println(" Login attempt for email: " + loginRequestDTO.getEmail());
         
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequestDTO.getEmail(),loginRequestDTO.getPassword())
             );
-            System.out.println("✅ Authentication successful");
+            System.out.println(" Authentication successful");
         } catch (Exception e) {
-            System.out.println("❌ Authentication failed: " + e.getMessage());
-            throw e;
+            System.out.println(" Authentication failed: " + e.getMessage());
+            throw new AppException(ErrorCode.INCORRECT_LOGIN);
         }
         
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.INCORRECT_LOGIN));
 
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Role defaultRole = roleRepository.findByName("user")
@@ -83,6 +64,7 @@ public class AuthService {
                     });
 
             user.getRoles().add(defaultRole);
+            user.setAuthProvider(AuthenticationProvider.LOCAL);
             userRepository.save(user);
         }
 

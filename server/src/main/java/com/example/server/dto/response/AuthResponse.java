@@ -1,6 +1,5 @@
 package com.example.server.dto.response;
 
-import com.example.server.entity.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;

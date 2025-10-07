@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-// import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
@@ -9,57 +8,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Alert, AlertDescription } from "../ui/alert"
 import { Link, useNavigate } from "react-router-dom"
 import api from "../../axiosConfig"
-import { useAuth } from "../../contexts/auth-context"
 
 export function RegisterForm() {
 
   const [form, setForm] = useState({email:"",
                                     passwordHash:"",
                                     fullName:""});
-  const { register } = useAuth();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name] : e.target.value});
   }
-  // const [email, setEmail] = useState("")
-  // const [password, setPassword] = useState("")
-  // const [name, setName] = useState("")
   const [confirmPassword , setConfirmPassword] = useState("")
   const [error, setError] = useState("")
-  // const [loading, setLoading] = useState(false)
-  // const { register } = useAuth()
-
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError("")
+    setError(error)
+    let min = 6;
 
     if (form.passwordHash !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
+    
+    if (form.passwordHash.length < min) {
+      setError(`Password must be at least ${min} characters`)
+      return
+    }
 
-    // if (password.length < 6) {
-    //   setError("Password must be at least 6 characters")
-    //   return
-    // }
-
-    // setLoading(true)
-    // const result = await register(email, password, name)
+    setLoading(true)
     try {
       const res = await api.post("/accounts/register", form);
       navigate("/login");
     } catch (error) {
       if(error.response && error.response.status === 403){
-        alert("User already exists");
+        setError("User already exists");
       }else{
-        alert("Signup failed. Please try again");
+        setError("Signup failed. Please try again");
       }
     }
-    // if (!result.success) {
-    //   setError(result.error)
-    // }
-
     
   }
 
@@ -128,11 +116,8 @@ export function RegisterForm() {
             />
           </div>
 
-          {/* <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create Account"}
-          </Button> */}
-          <Button type="submit" className="w-full" >
-            Create Account
           </Button>
 
           <div className="text-center text-sm text-muted-foreground">

@@ -9,11 +9,11 @@ import lombok.Data;
 @AllArgsConstructor
 // User Update của user
 public class UpdateUserInfoRequestDTO {
-    @NotBlank(message = "Full name cannot be empty")
+    @NotBlank(message = "FULL_NAME_EMPTY")
     private String fullName;
     @Pattern(
             regexp = "^0[0-9]{9,10}$",
-            message = "Phone number must start with 0 and be 10–11 digits"
+            message = "PHONE_INVALID"
     )
     private String phone;
 }

@@ -5,12 +5,10 @@ import com.example.server.dto.request.RegisterRequestDTO;
 import com.example.server.dto.request.UpdateUserInfoRequestDTO;
 import com.example.server.dto.request.UserUpdateRequest;
 import com.example.server.dto.response.ApiResponse;
-import com.example.server.dto.response.AuthResponse;
 import com.example.server.dto.response.UserResponse;
 import com.example.server.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

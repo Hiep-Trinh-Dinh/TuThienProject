@@ -3,7 +3,6 @@ package com.example.server.config;
 import com.example.server.config.oauth.CustomOAuth2UserService;
 import com.example.server.config.oauth.OAuth2SuccessHandler;
 import com.example.server.util.JwtFilter;
-import com.example.server.util.JwtUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,8 +17,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -33,7 +30,7 @@ public class SecurityConfig {
     JwtFilter jwtFilter;
     UserDetailsService userDetailsService;
     OAuth2SuccessHandler oAuth2SuccessHandler;
-
+    EncoderConfig encoderConfig;
 
     CustomOAuth2UserService customOAuth2UserService;
 
@@ -59,27 +56,23 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
                         .authorizationEndpoint(authorization -> authorization
-                                // ✅ Dùng repository mặc định của Spring (Session)
                                 .authorizationRequestRepository(new HttpSessionOAuth2AuthorizationRequestRepository())
                         )
                         .failureHandler((request, response, exception) -> {
                             response.setStatus(401);
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\": \"" + exception.getMessage() + "\"}");
+                            response.sendRedirect("http://localhost:5173/login");
                         })
                 )
                 .build();
-    }
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(encoderConfig.passwordEncoder());
         return authProvider;
     }
 
