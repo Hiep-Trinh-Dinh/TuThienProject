@@ -46,7 +46,7 @@ public class UserController {
 
     // thay doi mat khau
     @PatchMapping("/password/{id}")
-    public ApiResponse<UserResponse> changPwdById(@PathVariable Long id, @RequestBody PasswordRequestDTO dto) {
+    public ApiResponse<UserResponse> changPwdById(@PathVariable Long id, @Valid @RequestBody PasswordRequestDTO dto) {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.changePwdById(id, dto));
         return apiResponse;

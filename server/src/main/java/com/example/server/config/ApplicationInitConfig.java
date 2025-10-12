@@ -26,6 +26,7 @@ import java.util.Set;
 @Slf4j
 // khoi tao tai khoan admin neu trong db chua co
 public class ApplicationInitConfig {
+    String admin = "admin";
     PermissionRepository permissionRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
@@ -34,13 +35,13 @@ public class ApplicationInitConfig {
     ApplicationRunner applicationRunner(UserRepository userRepository){
         return args -> {
 
-            if(!userRepository.existsByFullName("admin")){
+            if(!userRepository.existsByFullName(admin)){
 
-                Role defaultRole = roleRepository.findByName("admin")
+                Role defaultRole = roleRepository.findByName(admin)
                         .orElseGet(() -> {
                             // Nếu role chưa tồn tại, tạo mới
                             Role newRole = new Role();
-                            newRole.setName("admin");
+                            newRole.setName(admin);
                             newRole.setDescription("Default admin role");
 
                             return roleRepository.save(newRole);
@@ -51,8 +52,8 @@ public class ApplicationInitConfig {
 
                 User user = User.builder()
                         .email("admin@gmail.com")
-                        .fullName("admin")
-                        .passwordHash(passwordEncoder.encode("admin"))
+                        .fullName(admin)
+                        .passwordHash(passwordEncoder.encode(admin))
                         .status(User.Status.active)
                         .roles(roles)
                         .authProvider(AuthenticationProvider.LOCAL)

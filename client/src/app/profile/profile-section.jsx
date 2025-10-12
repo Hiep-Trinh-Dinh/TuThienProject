@@ -1,17 +1,19 @@
+import {
+  Snackbar,
+  Alert
+} from "@mui/material";
 import { useState, useEffect } from "react";
-// import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { Alert, AlertDescription } from "../../components/ui/alert"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import api from "../../axiosConfig";
 
 
 function ProfileSection(){
     // change info form
-    const [error, setError] = useState("")
+    const nameRegex = /^[A-ZÀ-Ỹ][a-zà-ỹ]+(?: [A-ZÀ-Ỹ][a-zà-ỹ]+)+$/;
+    const phoneRegex = /^(?:\+?\d{1,3})?[ -]?(?:\d{9,10})$/;
     const {id} = useParams();
     const [form, setForm] = useState({
         fullName: "",
@@ -19,7 +21,6 @@ function ProfileSection(){
         phone: "",
         status:"",
         createdAt:""});
-    //   const { update } = useAuth();
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name] : e.target.value});
     }
@@ -31,32 +32,100 @@ function ProfileSection(){
                 setForm(userData);
             } catch (error) {
                 console.error("Error Fetching user",error.message);
-            }   
+            }
         }
         fetchUpdateUser();
     },[id]);
+    // cài đặt thêm thông báo error
+    const [snackBarErrorOpen, setSnackBarErrorOpen] = useState(false);
+    const [snackBarSuccessOpen, setSnackSuccessBarOpen] = useState(false);
+    const [snackBarMessage, setSnackBarMessage] = useState("");
+
+    const handleCloseSnackBar = (event, reason) => {
+        if (reason === "clickaway") {
+        return;
+        }
+
+        setSnackBarErrorOpen(false);
+        setSnackSuccessBarOpen(false);
+    };
 
     const handleInfoSubmit = async (e) => {
-    e.preventDefault();
-    setError("")
-    try {
-        const res = await api.put(`/accounts/${id}`, form);
-        localStorage.removeItem("charity-user");
-        localStorage.setItem("charity-user",JSON.stringify(res.data.result));
-        alert("Successfully");
-    } catch (error) {
-        if (error.response && error.response.status === 403) {
-        alert("User already exists");
-        } else {
-        alert("Update failed. Please try again");
-        console.error(error);
+        e.preventDefault();
+        let accept = true;
+
+        if(form.fullName.trim() === ""){
+            setSnackBarMessage("Full name cannot be empty.")
+            setSnackBarErrorOpen(true)
+            accept = false
+        }else if(!nameRegex.test(form.fullName)){
+            setSnackBarMessage("Your full name is not true.")
+            setSnackBarErrorOpen(true)
+            accept = false
         }
-    }
+        
+        if(form.phone && !phoneRegex.test(form.phone)){
+            setSnackBarMessage("Your phone number is not valid.")
+            setSnackBarErrorOpen(true)
+            accept = false
+        }
+
+        if(accept){
+            try {
+                const res = await api.put(`/accounts/${id}`, form);
+                localStorage.removeItem("charity-user");
+                localStorage.setItem("charity-user",JSON.stringify(res.data.result));
+                setSnackBarMessage("Updated Successfully!")
+                setSnackSuccessBarOpen(true)
+            } catch (error) {
+                if (error.response && error.response.status === 403) {
+                    setSnackBarMessage("User already exists")
+                    setSnackBarErrorOpen(true)
+                } else {
+                    setSnackBarMessage("Update failed. Please try again")
+                    setSnackBarErrorOpen(true)
+                }
+            }
+        }
+        
     };
 
     
 
     return (
+    <>
+        <Snackbar
+        open={snackBarSuccessOpen}
+        onClose={handleCloseSnackBar}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+            <Alert
+                onClose={handleCloseSnackBar}
+                severity="success"
+                variant="filled"
+                sx={{ width: "100%" }}
+            >
+                {snackBarMessage}
+            </Alert>
+        </Snackbar>
+
+        <Snackbar
+        open={snackBarErrorOpen}
+        onClose={handleCloseSnackBar}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+            <Alert
+                onClose={handleCloseSnackBar}
+                severity="error"
+                variant="filled"
+                sx={{ width: "100%" }}
+            >
+                {snackBarMessage}
+            </Alert>
+        </Snackbar>
+        
         <div className="w-full">
             {/* Profile Header */}
             <div className="w-full">
@@ -88,13 +157,6 @@ function ProfileSection(){
                 onSubmit={handleInfoSubmit}
                 className="bg-white shadow rounded-lg p-6 md:p-8 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                {error && (
-                    <div className="md:col-span-2">
-                    <Alert variant="destructive" className="rounded-lg">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                    </div>
-                )}
 
                 {/* Full Name */}
                 <div className="space-y-2">
@@ -108,7 +170,6 @@ function ProfileSection(){
                     value={form.fullName}
                     onChange={handleChange}
                     placeholder="Enter your full name"
-                    required
                     className="rounded-lg"
                     />
                 </div>
@@ -192,7 +253,7 @@ function ProfileSection(){
                 </form>
             </div>
         </div>
-
+    </>
     )
 }
 export default ProfileSection;

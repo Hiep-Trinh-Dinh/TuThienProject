@@ -1,6 +1,5 @@
 package com.example.server.exception;
 
-
 import com.example.server.dto.response.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
@@ -58,32 +57,44 @@ public class GlobalExceptionHandler {
     }
 
 
-
-
-    // This function is used for validation of method arguments which are valid or not
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> HandlingMethodArgumentNotValidException(MethodArgumentNotValidException exception){
-        String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
+    ResponseEntity<ApiResponse> HandlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+        // Ưu tiên lấy fieldError trước, nếu null thì lấy globalError
+        String enumKey = null;
+        if (exception.getFieldError() != null) {
+            enumKey = exception.getFieldError().getDefaultMessage();
+        } else if (!exception.getGlobalErrors().isEmpty()) {
+            enumKey = exception.getGlobalErrors().getFirst().getDefaultMessage();
+        }
+
+        // Nếu enumKey vẫn null (trường hợp hiếm), fallback
+        if (enumKey == null) {
+            enumKey = "INVALID_KEY";
+        }
 
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
-        Map<String,Object> attributes = null;
+        Map<String, Object> attributes = null;
 
-        try{
+        try {
             errorCode = ErrorCode.valueOf(enumKey);
 
+            // unwrap constraint nếu có
             var constraintViolation = exception.getBindingResult()
                     .getAllErrors().getFirst().unwrap(ConstraintViolation.class);
 
             attributes = constraintViolation.getConstraintDescriptor().getAttributes();
-//            log.info(attributes.toString());
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException | NullPointerException e) {
+            // ignore: dùng mặc định INVALID_KEY
+        }
+
         return ResponseEntity.badRequest().body(ApiResponse.builder()
-                        .code(errorCode.getCode())
-                        .message(Objects.nonNull(attributes) ?
-                                mapAttribute(errorCode.getMessage(),attributes) :
-                                errorCode.getMessage())
-                        .build());
+                .code(errorCode.getCode())
+                .message(Objects.nonNull(attributes)
+                        ? mapAttribute(errorCode.getMessage(), attributes)
+                        : errorCode.getMessage())
+                .build());
     }
+
 
     private String mapAttribute(String msg, Map<String, Object> attributes){
         String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));

@@ -7,6 +7,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const storedUser = localStorage.getItem("charity-user")
     if (storedUser) {
@@ -17,6 +18,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("charity-user")
       }
     }
+    setLoading(false);
   }, [])
 
   const login = async (token) => {
@@ -47,6 +49,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     isAuthenticated: !!user,
+    loading,
   }
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

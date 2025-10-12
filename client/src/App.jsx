@@ -11,20 +11,38 @@ import { AuthProvider } from "./contexts/auth-context"
 import './styles/globals.css'
 import ProfileSection from './app/profile/profile-section'
 import ChangePassword from './app/profile/change-password'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 function App() {
   return (
     <AuthProvider>
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/profile/:id" element={<ProfileSection />} />
-        <Route path="/password/:id" element={<ChangePassword />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/projects/:id" element={<ProjectDetailsPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/about" element={<About />} />
+        {/* Public routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:id" element={<ProjectDetailsPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<About />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/profile/:id"
+            element={
+              <ProtectedRoute>
+                <ProfileSection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/password/:id"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
       </Routes>
       <Footer />
     </BrowserRouter>
