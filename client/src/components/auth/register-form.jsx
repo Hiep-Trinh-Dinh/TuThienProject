@@ -111,7 +111,6 @@ export function RegisterForm() {
       return;
     }
 
-    setSnackSuccessBarOpen(false)
     setSnackErrorBarOpen(false)
   };
 

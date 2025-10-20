@@ -156,12 +156,18 @@ export function LoginForm() {
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          
+          <div className="text-center text-sm text-muted-foreground">
+            <Link to="/verifyemail" className="text-primary hover:underline">
+              <strong>Forgot your password ?</strong>
+            </Link>
+          </div>
+
           <div className="text-center text-sm text-muted-foreground">
             <a href = {`${API_BASE_URL}/oauth2/authorization/google`} className="text-primary hover:underline">
               Login with Google
             </a>
           </div>
+
           {/* <div className="text-center text-sm text-muted-foreground">
             <a href = {`${API_BASE_URL}/oauth2/authorization/facebook`} className="text-primary hover:underline">
               Login with Facebook
