@@ -93,8 +93,6 @@ function ChangePassword(){
         if(accept){
             try {
                 const res = await api.patch(`/accounts/password/${id}`, formPwd);
-                localStorage.removeItem("charity-user");
-                localStorage.setItem("charity-user",JSON.stringify(res.data));
                 setSnackBarMessage("Successfully");
                 setSnackSuccessBarOpen(true);
                 } catch (error) {

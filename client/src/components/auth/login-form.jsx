@@ -74,8 +74,8 @@ export function LoginForm() {
         login(res.data.token);
         navigate("/");
       } catch (error) {
-        if(error.response && error.response.status == 400){
-          setSnackBarMessage("Email address or password cannot be empty.");
+        if(error.response && error.response.status == 401){
+          setSnackBarMessage("User is disabled");
           setSnackBarErrorOpen(true);
         }else{
           setSnackBarMessage("Login failed. Please try again.");

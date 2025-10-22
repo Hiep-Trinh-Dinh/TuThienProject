@@ -1,15 +1,14 @@
 package com.example.server.service;
 
-import com.example.server.dto.request.PasswordRequestDTO;
-import com.example.server.dto.request.RegisterRequestDTO;
-import com.example.server.dto.request.UpdateUserInfoRequestDTO;
-import com.example.server.dto.request.UserUpdateRequest;
+import com.example.server.dto.request.*;
 import com.example.server.dto.response.UserResponse;
 import com.example.server.entity.AuthenticationProvider;
+import com.example.server.entity.ConfirmationToken;
 import com.example.server.entity.User;
 import com.example.server.exception.AppException;
 import com.example.server.exception.ErrorCode;
 import com.example.server.mapper.UserMapper;
+import com.example.server.repository.ConfirmationTokenRepository;
 import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
 import lombok.AccessLevel;
@@ -21,8 +20,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -33,6 +34,8 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     UserMapper userMapper;
     RoleRepository roleRepository;
+    ConfirmationTokenRepository confirmationTokenRepository;
+    EmailService emailService;
 
     public UserResponse createUser(RegisterRequestDTO request){
         if(userRepository.findByEmail(request.getEmail()).isPresent()){
@@ -43,7 +46,56 @@ public class UserService {
         user.setFullName(request.getFullName());
         user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
         user = userRepository.save(user);
+
+        ConfirmationToken confirmationToken = ConfirmationToken.builder()
+                .token(UUID.randomUUID().toString())
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .user(user)
+                .build();
+
+        confirmationTokenRepository.save(confirmationToken);
+
+        String messageBody = """
+               \s
+                Thank you for registration. Please confirm your email.
+               \s
+                http://localhost:8080/api/accounts/register/confirmToken?token=%s
+                   \s
+               \s""".formatted(confirmationToken.getToken());
+
+        MailBodyRequest mailBodyRequest = MailBodyRequest.builder()
+                .to(user.getEmail())
+                .text(messageBody)
+                .subject("Confirm your email")
+                .build();
+        emailService.sendSimpleMessage(mailBodyRequest);
+
         return userMapper.toUserResponse(user);
+    }
+
+    public void confirmToken(String token){
+        // 1. check if the token exist
+        ConfirmationToken confirmedToken = confirmationTokenRepository.findByToken(token)
+                .orElseThrow(()->new AppException(ErrorCode.TOKEN_NOT_FOUND));
+        // 2. check if user already verified
+        if(confirmedToken.getConfirmedAt() != null){
+            throw new IllegalStateException("User already verified");
+        }
+        // 3. check if token expired
+        if(confirmedToken.getExpiresAt().isBefore(LocalDateTime.now())){
+            throw new IllegalStateException("Token expired");
+        }
+        // 4. if everything is ok then update the confirmation time
+        confirmedToken.setConfirmedAt(LocalDateTime.now());
+        confirmationTokenRepository.save(confirmedToken);
+        // 5. enable the user
+        enableUser(confirmedToken.getUser());
+    }
+
+    private void enableUser(User user) {
+        user.setStatus(User.Status.ACTIVE);
+        userRepository.save(user);
     }
 
     // this update info function is designed for USER

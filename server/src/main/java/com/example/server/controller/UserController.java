@@ -75,4 +75,12 @@ public class UserController {
         apiResponse.setResult(userService.getUserInfo());
         return apiResponse;
     }
+
+    // xac nhan token gui qua email de enable new account
+    @GetMapping("/register/confirmToken")
+    public String confirmToken(@RequestParam("token") String token){
+        userService.confirmToken(token);
+        return "Confirmed token";
+    }
+
 }

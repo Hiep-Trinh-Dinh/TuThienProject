@@ -54,7 +54,7 @@ public class ApplicationInitConfig {
                         .email("admin@gmail.com")
                         .fullName(admin)
                         .passwordHash(passwordEncoder.encode(admin))
-                        .status(User.Status.active)
+                        .status(User.Status.ACTIVE)
                         .roles(roles)
                         .authProvider(AuthenticationProvider.LOCAL)
                         .build();

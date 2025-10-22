@@ -40,7 +40,6 @@ public class ForgotPasswordController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
 
-
         if (forgotPasswordRepository.existsByUser(user)){
             ForgotPassword existedForgotPassword = forgotPasswordRepository.findByUser(user)
                     .orElseThrow(()->new AppException(ErrorCode.INVALID_KEY));

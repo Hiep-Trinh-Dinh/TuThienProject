@@ -88,7 +88,8 @@ export function RegisterForm() {
         const res = await api.post("/accounts/register", form);
         localStorage.setItem("userEmail",form.email)
         localStorage.setItem("userPwd",form.passwordHash)
-        navigate("/login");
+        setSnackBarMessage("Please confirm your email address")
+        setSnackSuccessBarOpen(true)
       } catch (error) {
         if(error.response && error.response.status === 403){
           setSnackBarMessage(`User already exists`);
@@ -103,6 +104,7 @@ export function RegisterForm() {
     setLoading(false)
   }
 
+  const [snackBarSuccessOpen, setSnackSuccessBarOpen] = useState(false);
   const [snackBarErrorOpen, setSnackErrorBarOpen] = useState(false);
   const [snackBarMessage, setSnackBarMessage] = useState("");
   // cài đặt thêm thông báo error
@@ -112,10 +114,27 @@ export function RegisterForm() {
     }
 
     setSnackErrorBarOpen(false)
+    setSnackSuccessBarOpen(false);
   };
 
   return (
   <>
+    <Snackbar
+      open={snackBarSuccessOpen}
+      onClose={handleCloseSnackBar}
+      autoHideDuration={6000}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+    >
+      <Alert
+        onClose={handleCloseSnackBar}
+        severity="success"
+        variant="filled"
+        sx={{ width: "100%" }}
+      >
+        {snackBarMessage}
+      </Alert>
+    </Snackbar>
+
     <Snackbar
       open={snackBarErrorOpen}
       onClose={handleCloseSnackBar}

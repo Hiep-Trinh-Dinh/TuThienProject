@@ -43,6 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             newUser.setEmail(email);
             newUser.setFullName(name);
             newUser.setRoles(Set.of(role));
+            newUser.setStatus(User.Status.ACTIVE);
 
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             String dummyPassword = encoder.encode(UUID.randomUUID().toString()); // random password

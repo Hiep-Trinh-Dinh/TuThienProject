@@ -14,6 +14,7 @@ function ProfileSection(){
     // change info form
     const nameRegex = /^[A-ZÀ-Ỹ][a-zà-ỹ]+(?: [A-ZÀ-Ỹ][a-zà-ỹ]+)+$/;
     const phoneRegex = /^(?:\+?\d{1,3})?[ -]?(?:\d{9,10})$/;
+    const userData = JSON.parse(localStorage.getItem("charity-user"));
     const {id} = useParams();
     const [form, setForm] = useState({
         fullName: "",
@@ -24,7 +25,6 @@ function ProfileSection(){
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name] : e.target.value});
     }
-    const userData = JSON.parse(localStorage.getItem("charity-user"));
     useEffect(()=>{
         window.scrollTo(0, 0);
         const fetchUpdateUser = async ()=>{

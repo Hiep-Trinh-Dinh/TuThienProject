@@ -30,7 +30,6 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class AuthService {
     RoleRepository roleRepository;
-
     UserRepository userRepository;
     AuthenticationManager authenticationManager;
     JwtUtil jwtUtil;
@@ -52,6 +51,10 @@ public class AuthService {
         
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.INCORRECT_LOGIN));
+
+        if(user.getStatus().name().equals("INACTIVE")){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Role defaultRole = roleRepository.findByName("user")
