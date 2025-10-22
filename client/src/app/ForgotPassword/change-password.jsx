@@ -1,31 +1,35 @@
+"use client"
+
 import {
   Snackbar,
   Alert
 } from "@mui/material";
-import { Button } from "../../components/ui/button"
+
+import api from "../../axiosConfig";
+import { useState } from "react"
+import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import api from "../../axiosConfig";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 
-function ChangePassword(){
-    // Regex
+
+export function ChangePasswordForm() {
+  // Regex
     const pwdRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
     const [strength, setStrength] = useState(0);
     const [strengthColor, setStrengthColor] = useState("transparent");
-    const {id} = useParams();
-    const [confirmPassword , setConfirmPassword] = useState("")
-
+    const {email} = useParams();
+    const navigator = useNavigate();
     // change password form
     const [formPwd, setFormPwd] = useState({
-        currentPassword: "",
-        newPassword: ""});
+        password: "",
+        repeatedPassword: ""});
     const handleChangePwd = (e) => {
         const { name, value } = e.target;
         setFormPwd({ ...formPwd, [e.target.name] : e.target.value});
-        if (name === "newPassword") evaluateStrength(value);
+        if (name === "password") evaluateStrength(value);
     }
 
     // password strength bar
@@ -45,7 +49,6 @@ function ChangePassword(){
 
     // cài đặt thêm thông báo error
     const [snackBarErrorOpen, setSnackBarErrorOpen] = useState(false);
-    const [snackBarSuccessOpen, setSnackSuccessBarOpen] = useState(false);
     const [snackBarMessage, setSnackBarMessage] = useState("");
 
     const handleCloseSnackBar = (event, reason) => {
@@ -54,7 +57,6 @@ function ChangePassword(){
         }
 
         setSnackBarErrorOpen(false);
-        setSnackSuccessBarOpen(false);
     };
 
     const handleChangePwdSubmit = async (e) => {
@@ -62,45 +64,36 @@ function ChangePassword(){
         let accept = true
         let min = 6
         
-        if(formPwd.currentPassword.trim() === ""){
-            setSnackBarMessage("Current password cannot be empty.");
+        if(formPwd.password.trim() === ""){
+            setSnackBarMessage("The password field cannot be empty.");
             setSnackBarErrorOpen(true);
             accept = false
-        }else if(formPwd.newPassword.trim() === ""){
-            setSnackBarMessage("New password cannot be empty.");
+        }else if(formPwd.repeatedPassword.trim() === ""){
+            setSnackBarMessage("The repeated password field cannot be empty.");
             setSnackBarErrorOpen(true);
             accept = false
-        }else if(!pwdRegex.test(formPwd.newPassword)){
+        }else if(!pwdRegex.test(formPwd.password)){
             setSnackBarMessage(`Password must be at least ${min} characters long.\n` +
             "Contains at least 1 uppercase letter.\n" +
             "Contains at least 1 symbol (e.g., !@#$%^&*).");
             setSnackBarErrorOpen(true);
             accept =  false
-        }else if (formPwd.newPassword.trim() === formPwd.currentPassword.trim()){
-            setSnackBarMessage("Your new password cannot be as same as your former password!");
+        }else if (formPwd.password.trim() !== formPwd.repeatedPassword.trim()){
+            setSnackBarMessage("Your repeated password does not match your password!");
             setSnackBarErrorOpen(true);
             accept =  false
-        }else if(confirmPassword.trim() === ""){
-            setSnackBarMessage("Confirm password cannot be empty.");
-            setSnackBarErrorOpen(true);
-            accept = false  
-        }else if (formPwd.newPassword !== confirmPassword) {
-            setSnackBarMessage("Passwords do not match");
-            setSnackBarErrorOpen(true);
-            accept = false
         }
 
         if(accept){
             try {
-                const res = await api.patch(`/accounts/password/${id}`, formPwd);
-                setSnackBarMessage("Successfully");
-                setSnackSuccessBarOpen(true);
+                const res = await api.post(`/forgotPassword/changePassword/${email}`, formPwd);
+                navigator("/login");
                 } catch (error) {
                 if(error.response && error.response.status === 403){
-                    setSnackBarMessage("Current password is not correct");
+                    setSnackBarMessage("Invalid Forgot Password Request!");
                     setSnackBarErrorOpen(true);
                 }else{
-                    setSnackBarMessage("Changing failed. Please check your current password again. It might be not correct");
+                    setSnackBarMessage("Changing failed. Please try again.");
                     setSnackBarErrorOpen(true);
                 }
             }
@@ -109,22 +102,6 @@ function ChangePassword(){
 
     return(
         <>
-            <Snackbar
-              open={snackBarSuccessOpen}
-              onClose={handleCloseSnackBar}
-              autoHideDuration={6000}
-              anchorOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <Alert
-                onClose={handleCloseSnackBar}
-                severity="success"
-                variant="filled"
-                sx={{ width: "100%" }}
-              >
-                {snackBarMessage}
-              </Alert>
-            </Snackbar>
-        
             <Snackbar
               open={snackBarErrorOpen}
               onClose={handleCloseSnackBar}
@@ -140,6 +117,7 @@ function ChangePassword(){
                 {snackBarMessage}
               </Alert>
             </Snackbar>
+
             <Card className="w-full max-w-md mx-auto">
                 <CardHeader className="text-center">
                     <CardTitle className="text-2xl font-bold text-primary">Change Password</CardTitle>
@@ -147,26 +125,14 @@ function ChangePassword(){
                 <CardContent>
                     <form onSubmit={handleChangePwdSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Label htmlFor="password">New Password</Label>
                         <Input
-                        id="currentPassword"
-                        name="currentPassword"
+                        id="password"
+                        name="password"
                         type="password"
-                        value={formPwd.currentPassword}
+                        value={formPwd.password}
                         onChange={handleChangePwd}
-                        placeholder="Type in current password"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input
-                        id="newPassword"
-                        name="newPassword"
-                        type="password"
-                        value={formPwd.newPassword}
-                        onChange={handleChangePwd}
-                        placeholder="Create a new password"
+                        placeholder="Type in new password"
                         />
                         {/* Password Strength Bar */}
                         <div className="w-full h-2 bg-gray-200 rounded mt-1 overflow-hidden">
@@ -180,7 +146,7 @@ function ChangePassword(){
                         </div>
                         
                         {/* Optional text feedback */}
-                        {formPwd.newPassword && (
+                        {formPwd.password && (
                         <p
                             className="text-sm mt-1 font-medium"
                             style={{ color: strengthColor }}
@@ -202,15 +168,17 @@ function ChangePassword(){
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Label htmlFor="repeatedPassword">Confirm New Password</Label>
                         <Input
-                        id="confirmPassword"
+                        id="repeatedPassword"
+                        name="repeatedPassword"
                         type="password"
-                        name="confirmPassword"
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={formPwd.repeatedPassword}
+                        onChange={handleChangePwd}
                         placeholder="Confirm your password"
                         />
                     </div>
+
                     <Button type="submit" className="w-full" >
                        Change Password
                     </Button>           
@@ -220,4 +188,4 @@ function ChangePassword(){
             </>
     )
 }
-export default ChangePassword
+export default ChangePasswordForm

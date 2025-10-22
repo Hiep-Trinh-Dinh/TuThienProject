@@ -1,52 +1,125 @@
 "use client"
+
+import {
+  Snackbar,
+  Alert
+} from "@mui/material";
+
 import api from "../../axiosConfig"
-import { useState, useEffect} from "react"
+import { useState } from "react"
 import { API_BASE_URL } from "../../../eslint.config"
-// import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Alert, AlertDescription } from "../ui/alert"
 import { Link,useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
 
 export function LoginForm() {
-  // const [email, setEmail] = useState("")
-  // const [password, setPassword] = useState("")
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const { login } = useAuth()
-  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  // const { login } = useAuth()
   const navigate = useNavigate();
-  const [form, setForm] = useState({email:"",
-                                    password:""});
+  const [form, setForm] = useState({
+    email: localStorage.getItem("userEmail") || "",
+    password: localStorage.getItem("userPwd") || ""
+  });
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name] : e.target.value});
   }
+  // cài đặt thêm thông báo error
+  const [snackBarErrorOpen, setSnackBarErrorOpen] = useState(false);
+  const [snackBarSuccessOpen, setSnackSuccessBarOpen] = useState(false);
+  const [snackBarMessage, setSnackBarMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(error)
-
-
-    setLoading(true)
-    try {
-      const res = await api.post("/auth/login", form);
-      login(res.data.token);
-      navigate("/");
-    } catch (error) {
-      if(error.response && error.response.status == 400){
-        setError("Email address or password cannot be empty.");
-      }else{
-        setError("Login failed. Please try again.");
-      }
+  const handleCloseSnackBar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
     }
 
+    setSnackBarErrorOpen(false);
+    setSnackSuccessBarOpen(false);
+  };
+
+  if(localStorage.getItem("userEmail") 
+    && localStorage.getItem("userPwd")){
+      setSnackBarMessage("Signing up successfully!")
+      setSnackSuccessBarOpen(true)
+      localStorage.removeItem("userEmail")
+      localStorage.removeItem("userPwd")
+  }
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    let accept = true
+    setLoading(true)
+
+    if(form.email.trim() === ""){
+      setSnackBarMessage("Email address field cannot be empty.");
+      setSnackBarErrorOpen(true);
+      accept = false
+    }else if(!emailRegex.test(form.email)){
+      setSnackBarMessage("Email address is invalid format.\nExample: user@example.com");
+      setSnackBarErrorOpen(true);
+      accept = false
+    }else if(form.password.trim() === ""){
+      setSnackBarMessage("Password field cannot be empty.");
+      setSnackBarErrorOpen(true);
+      accept = false
+    }
+
+    if(accept === true){
+      try {
+        const res = await api.post("/auth/login", form);
+        login(res.data.token);
+        navigate("/");
+      } catch (error) {
+        if(error.response && error.response.status == 401){
+          setSnackBarMessage("User is disabled");
+          setSnackBarErrorOpen(true);
+        }else{
+          setSnackBarMessage("Login failed. Please try again.");
+          setSnackBarErrorOpen(true);
+        }
+      }
+    }
+  
     setLoading(false)
   }
 
-  return (
+  return (<>
+    <Snackbar
+      open={snackBarSuccessOpen}
+      onClose={handleCloseSnackBar}
+      autoHideDuration={6000}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+    >
+      <Alert
+        onClose={handleCloseSnackBar}
+        severity="success"
+        variant="filled"
+        sx={{ width: "100%" }}
+      >
+        {snackBarMessage}
+      </Alert>
+    </Snackbar>
+
+    <Snackbar
+      open={snackBarErrorOpen}
+      onClose={handleCloseSnackBar}
+      autoHideDuration={6000}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+    >
+      <Alert
+        onClose={handleCloseSnackBar}
+        severity="error"
+        variant="filled"
+        sx={{ width: "100%" }}
+      >
+        {snackBarMessage}
+      </Alert>
+    </Snackbar>
+  
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary">Welcome Back</CardTitle>
@@ -54,22 +127,15 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
               name="email"
               value={form.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              
             />
           </div>
 
@@ -90,12 +156,18 @@ export function LoginForm() {
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          
+          <div className="text-center text-sm text-muted-foreground">
+            <Link to="/verifyemail" className="text-primary hover:underline">
+              <strong>Forgot your password ?</strong>
+            </Link>
+          </div>
+
           <div className="text-center text-sm text-muted-foreground">
             <a href = {`${API_BASE_URL}/oauth2/authorization/google`} className="text-primary hover:underline">
               Login with Google
             </a>
           </div>
+
           {/* <div className="text-center text-sm text-muted-foreground">
             <a href = {`${API_BASE_URL}/oauth2/authorization/facebook`} className="text-primary hover:underline">
               Login with Facebook
@@ -119,6 +191,7 @@ export function LoginForm() {
         </form>
       </CardContent>
     </Card>
+</>
   )
 }
 

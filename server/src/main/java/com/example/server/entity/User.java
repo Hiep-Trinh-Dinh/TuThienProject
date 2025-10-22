@@ -30,6 +30,9 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ForgotPassword forgotPassword;
+
     @ManyToMany
     private Set<Role> roles;
 
@@ -37,8 +40,8 @@ public class User {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "ENUM('active', 'inactive', 'banned') DEFAULT 'active'")
-    private Status status = Status.active;
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'INACTIVE', 'BANNED') DEFAULT 'INACTIVE'")
+    private Status status = Status.INACTIVE;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -48,6 +51,6 @@ public class User {
     private AuthenticationProvider authProvider;
 
     public enum Status {
-        active, inactive, banned
+        ACTIVE, INACTIVE, BANNED
     }
 }

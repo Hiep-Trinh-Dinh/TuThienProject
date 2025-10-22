@@ -29,8 +29,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class AuthService {
-    private final RoleRepository roleRepository;
-
+    RoleRepository roleRepository;
     UserRepository userRepository;
     AuthenticationManager authenticationManager;
     JwtUtil jwtUtil;
@@ -38,7 +37,7 @@ public class AuthService {
 
     public AuthResponse login(LoginRequestDTO loginRequestDTO){
         System.out.println(" Login attempt for email: " + loginRequestDTO.getEmail());
-        
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -52,6 +51,10 @@ public class AuthService {
         
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.INCORRECT_LOGIN));
+
+        if(user.getStatus().name().equals("INACTIVE")){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Role defaultRole = roleRepository.findByName("user")
@@ -73,7 +76,7 @@ public class AuthService {
     }
 
     public IntrospectResponse introspect(IntrospectRequest request){
-        Boolean verified = jwtUtil.validateToken(request.getToken());
+        boolean verified = jwtUtil.validateToken(request.getToken());
 
         if (!(verified && jwtUtil.extractAllClaims(request.getToken()).getExpiration().after(new Date()))){
             verified = false;

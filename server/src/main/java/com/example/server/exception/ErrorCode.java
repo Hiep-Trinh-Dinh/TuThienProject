@@ -19,7 +19,10 @@ public enum ErrorCode {
     EMAIL_EMPTY(1010,"Email cannot be empty", HttpStatus.BAD_REQUEST),
     PASSWORD_EMPTY(1011,"Password cannot be empty", HttpStatus.BAD_REQUEST),
     FULL_NAME_EMPTY(1012,"Full name cannot be empty",HttpStatus.BAD_REQUEST),
-    INCORRECT_LOGIN(1014,"Email or password is not correct. Please check again.", HttpStatus.NOT_FOUND)
+    INCORRECT_LOGIN(1014,"Email or password is not correct. Please check again.", HttpStatus.NOT_FOUND),
+    CURRENT_PASSWORD_CANNOT_MATCH_NEW_PASSWORD(1015,"Your new password cannot be as same as your former password!",HttpStatus.BAD_REQUEST),
+    EXPIRED_OTP(1016,"Otp has expired!",HttpStatus.EXPECTATION_FAILED),
+    TOKEN_NOT_FOUND(1017,"Token not found",HttpStatus.NOT_FOUND),
     ;
 
     private int code;

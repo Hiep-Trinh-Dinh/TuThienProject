@@ -46,7 +46,7 @@ public class UserController {
 
     // thay doi mat khau
     @PatchMapping("/password/{id}")
-    public ApiResponse<UserResponse> changPwdById(@PathVariable Long id, @RequestBody PasswordRequestDTO dto) {
+    public ApiResponse<UserResponse> changPwdById(@PathVariable Long id, @Valid @RequestBody PasswordRequestDTO dto) {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.changePwdById(id, dto));
         return apiResponse;
@@ -75,4 +75,12 @@ public class UserController {
         apiResponse.setResult(userService.getUserInfo());
         return apiResponse;
     }
+
+    // xac nhan token gui qua email de enable new account
+    @GetMapping("/register/confirmToken")
+    public String confirmToken(@RequestParam("token") String token){
+        userService.confirmToken(token);
+        return "Confirmed token";
+    }
+
 }

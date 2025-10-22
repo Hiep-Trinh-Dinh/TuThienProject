@@ -3,7 +3,7 @@
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Link, useNavigate } from "react-router-dom"
-import { Heart, User, LogOut , UserSquare, LockKeyholeIcon, LogIn,  } from "lucide-react"
+import { Heart, User, LogOut , UserSquare, LockKeyholeIcon, } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { useEffect } from "react"
 
@@ -16,8 +16,14 @@ export function Navbar() {
       login(token);
     }
   }, []);
-  const { user, logout, login, isAuthenticated } = useAuth()
+  const { user, logout, login, isAuthenticated, loading} = useAuth()
   const navigate = useNavigate();
+  if (loading) {
+    return (<div className="spinner-container">
+            <div className="spinner"></div>
+            </div>
+      );
+  }
   return (
     <nav className="bg-white border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

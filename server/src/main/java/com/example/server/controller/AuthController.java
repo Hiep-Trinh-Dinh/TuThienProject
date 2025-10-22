@@ -7,13 +7,11 @@ import com.example.server.dto.response.AuthResponse;
 import com.example.server.dto.request.LoginRequestDTO;
 import com.example.server.dto.response.IntrospectResponse;
 import com.example.server.service.AuthService;
-import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,7 +28,7 @@ public class AuthController {
 
     // kiểm tra tính hợp lệ của token
     @PostMapping("/introspect")
-    ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) throws JOSEException, ParseException {
+    ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request){
         var res = authService.introspect(request);
         ApiResponse<IntrospectResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(res);
@@ -39,7 +37,7 @@ public class AuthController {
 
     // đăng xuất và hủy tính hợp lệ của token ngay khi chưa hết hạn
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws JOSEException, ParseException {
+    ApiResponse<Void> logout(@RequestBody LogoutRequest request){
         authService.logout(request);
         return new ApiResponse<>();
     }
