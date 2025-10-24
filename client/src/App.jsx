@@ -9,12 +9,14 @@ import About from './components/home/about-section'
 import ProjectDetailsPage from './app/projects/[id]/page'
 import { AuthProvider } from "./contexts/auth-context"
 import './styles/globals.css'
-import ProfileSection from './app/profile/profile-section'
+import EditProfileSection from './app/profile/edit-profile-section'
 import ChangePassword from './app/profile/change-password'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import VerifyMailForm from './app/ForgotPassword/verify-mail'
 import VerifyOtpForm from './app/ForgotPassword/verify-otp'
 import ChangePasswordForm from './app/ForgotPassword/change-password'
+import AccountSection from './app/profile/account'
+import PendingCampSection from './app/profile/pending-camps'
 function App() {
   return (
     <AuthProvider>
@@ -31,18 +33,20 @@ function App() {
           <Route path="/verifyemail" element={<VerifyMailForm />} />
           <Route path="/verifyotp/:email" element={<VerifyOtpForm />} />
           <Route path="/changepassword/:email" element={<ChangePasswordForm />} />
+          <Route path="/account" element={<AccountSection />} />
+          <Route path="/account/pending-camps/" element={<PendingCampSection />} />
 
           {/* Protected routes */}
           <Route
-            path="/profile/:id"
+            path="/account/profile/:id"
             element={
               <ProtectedRoute>
-                <ProfileSection />
+                <EditProfileSection />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/password/:id"
+            path="/account/password/:id"
             element={
               <ProtectedRoute>
                 <ChangePassword />

@@ -10,7 +10,7 @@ import { useParams } from "react-router-dom"
 import api from "../../axiosConfig";
 
 
-function ProfileSection(){
+function EditProfileSection(){
     // change info form
     const nameRegex = /^[A-ZÀ-Ỹ][a-zà-ỹ]+(?: [A-ZÀ-Ỹ][a-zà-ỹ]+)+$/;
     const phoneRegex = /^(?:\+?\d{1,3})?[ -]?(?:\d{9,10})$/;
@@ -256,4 +256,4 @@ function ProfileSection(){
     </>
     )
 }
-export default ProfileSection;
+export default EditProfileSection;
