@@ -3,7 +3,7 @@
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../ui/button"
 import { Link, useNavigate } from "react-router-dom"
-import { Heart, User, LogOut , UserSquare, LockKeyholeIcon, } from "lucide-react"
+import { Heart, User, LogOut , UserSquare, LockKeyholeIcon, UserPen, BookHeart } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { useEffect } from "react"
 
@@ -62,15 +62,29 @@ export function Navbar() {
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link to={`/profile/${user.userId}`} className="flex items-center">
+                    <Link to={`/account`} className="flex items-center">
                       <UserSquare className="h-4 w-4 mr-2" />
-                      Profile
+                      View profile
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to={`/account/profile/${user.userId}`} className="flex items-center">
+                      <UserPen className="h-4 w-4 mr-2" />
+                      Edit personal information
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to={`/account/pending-camps`} className="flex items-center">
+                      <BookHeart className="h-4 w-4 mr-2" />
+                      Pending projects for approval
                     </Link>
                   </DropdownMenuItem>
 
                   {user.authProvider === "LOCAL" ? 
                   (<DropdownMenuItem asChild>
-                    <Link to={`/password/${user.userId}`} className="flex items-center">
+                    <Link to={`/account/password/${user.userId}`} className="flex items-center">
                       <LockKeyholeIcon className="h-4 w-4 mr-2" />
                       Change password
                     </Link>

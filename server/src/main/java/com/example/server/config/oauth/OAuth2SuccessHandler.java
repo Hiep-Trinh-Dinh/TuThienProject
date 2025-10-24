@@ -32,13 +32,18 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 ()->new AppException(ErrorCode.USER_NOT_FOUND)
         );
 
-        // update auth_provider
-        userService.updateAuthProvider(authUser.getEmail(), authUser.getoAuth2ClientName());
+        if(user.getAuthProvider().name().equals("LOCAL")){
+            // Redirect về frontend
+            response.sendRedirect("http://localhost:5173/login?errorMessage=USER_EXISTED");
+        }else{
+            // update auth_provider
+            userService.updateAuthProvider(authUser.getEmail(), authUser.getoAuth2ClientName());
 
-        // Sinh JWT token
-        String token = jwtUtil.generateToken(user);
+            // Sinh JWT token
+            String token = jwtUtil.generateToken(user);
 
-        // Redirect về frontend
-        response.sendRedirect("http://localhost:5173/?token=" + token);
+            // Redirect về frontend
+            response.sendRedirect("http://localhost:5173/?token=" + token);
+        }
     }
 }
