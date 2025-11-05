@@ -37,7 +37,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect("http://localhost:5173/login?errorMessage=USER_EXISTED");
         }else{
             // update auth_provider
-            userService.updateAuthProvider(authUser.getEmail(), authUser.getoAuth2ClientName());
+            userService.updateAuthProvider(authUser.getEmail(), authUser.getoAuth2ClientName() != null ? authUser.getoAuth2ClientName().toUpperCase() : null);
 
             // Sinh JWT token
             String token = jwtUtil.generateToken(user);

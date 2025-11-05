@@ -84,8 +84,13 @@ export function LoginForm() {
     if(accept === true){
       try {
         const res = await api.post("/auth/login", form);
-        login(res.data.token);
-        navigate("/");
+        const userData = await login(res.data.token);
+        const roles = (userData?.roles || []).map(r => (r?.name || "").toString().toUpperCase());
+        if (roles.includes("ADMIN")) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } catch (error) {
         if(error.response && error.response.status == 401){
           setSnackBarMessage("User is disabled");
