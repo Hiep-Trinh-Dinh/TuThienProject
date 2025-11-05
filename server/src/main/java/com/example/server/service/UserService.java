@@ -14,6 +14,7 @@ import com.example.server.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
@@ -149,12 +151,43 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(existing));
     }
 
-    @PreAuthorize("hasRole('admin')")
     public List<UserResponse> getAllUsers(){
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toUserResponse)
-                .toList();
+        try {
+            List<User> users = userRepository.findAll();
+            log.info("Found {} users from database", users.size());
+            
+            if (users.isEmpty()) {
+                log.warn("No users found in database");
+                return List.of();
+            }
+            
+            return users.stream()
+                    .map(user -> {
+                        log.debug("Mapping user: {} with roles: {}, authProvider: {}", 
+                                user.getEmail(), 
+                                user.getRoles() != null ? user.getRoles().size() : 0,
+                                user.getAuthProvider());
+                        // Đảm bảo authProvider không null trước khi map
+                        // Nếu có lỗi parse enum từ DB, converter đã xử lý
+                        if (user.getAuthProvider() == null) {
+                            user.setAuthProvider(AuthenticationProvider.LOCAL);
+                        }
+                        try {
+                            UserResponse response = userMapper.toUserResponse(user);
+                            log.debug("Mapped user response: userId={}, email={}, rolesCount={}", 
+                                    response.getUserId(), response.getEmail(),
+                                    response.getRoles() != null ? response.getRoles().size() : 0);
+                            return response;
+                        } catch (Exception e) {
+                            log.error("Error mapping user {}: {}", user.getEmail(), e.getMessage(), e);
+                            throw new RuntimeException("Error mapping user " + user.getEmail() + ": " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+        } catch (Exception e) {
+            log.error("Error retrieving users", e);
+            throw new RuntimeException("Error retrieving users: " + e.getMessage(), e);
+        }
     }
 
     @PreAuthorize("hasRole('admin')")
@@ -170,23 +203,37 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        return UserResponse.builder()
-                .userId(user.getUserId())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
-                .authProvider(String.valueOf(user.getAuthProvider()))
-                .roles(null)
-                .build();
+        // Sử dụng mapper để trả về đầy đủ thông tin bao gồm roles
+        return userMapper.toUserResponse(user);
     }
 
     public void updateAuthProvider(String email, String authProviderName){
-        AuthenticationProvider authType = AuthenticationProvider.valueOf(authProviderName.toUpperCase());
+        // Nếu null hoặc empty thì không cập nhật
+        if(authProviderName == null || authProviderName.isBlank()) return;
+        AuthenticationProvider authType;
+        try {
+            authType = AuthenticationProvider.valueOf(authProviderName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // Nếu không đúng giá trị enum thì không cập nhật
+            return;
+        }
         User existing = userRepository.findByEmail(email)
                 .orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
         existing.setAuthProvider(authType);
         userRepository.save(existing);
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    public UserResponse adminUpdateStatus(Long id, String status){
+        User existing = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        try {
+            User.Status newStatus = User.Status.valueOf(status);
+            existing.setStatus(newStatus);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+        existing = userRepository.save(existing);
+        return userMapper.toUserResponse(existing);
     }
 }

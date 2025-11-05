@@ -52,6 +52,14 @@ public class UserController {
         return apiResponse;
     }
 
+    // admin: cập nhật trạng thái user (ACTIVE/INACTIVE/BANNED)
+    @PatchMapping("/user/{id}/status")
+    public ApiResponse<UserResponse> updateUserStatus(@PathVariable Long id, @RequestParam String status) {
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.adminUpdateStatus(id, status));
+        return apiResponse;
+    }
+
     // lay danh sach tat ca users
     @GetMapping
     public ApiResponse<List<UserResponse>> getUsers(){
@@ -60,8 +68,8 @@ public class UserController {
         return apiResponse;
     }
 
-    // tim kiem user qua email
-    @GetMapping("/{email}")
+    // lay user qua email -- Đổi path cho an toàn
+    @GetMapping("/email/{email}")
     public ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.getUserByEmail(email));

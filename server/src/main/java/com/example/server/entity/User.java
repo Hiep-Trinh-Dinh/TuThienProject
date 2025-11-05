@@ -46,7 +46,7 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.example.server.util.AuthenticationProviderConverter.class)
     @Column(name="auth_provider")
     private AuthenticationProvider authProvider;
 

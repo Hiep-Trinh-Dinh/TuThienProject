@@ -18,7 +18,7 @@ export function ProjectsListing() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("newest")
   
-  // Pagination state
+  // Pagination state (0-based page index)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
@@ -38,10 +38,21 @@ export function ProjectsListing() {
           currentPage,
           size
         )
-        
-        setProjects(response.content || [])
-        setTotalPages(response.totalPages || 0)
-        setTotalElements(response.totalElements || 0)
+
+        // Fallback: nếu API không trả về kiểu phân trang (content/totalPages/totalElements)
+        if (Array.isArray(response)) {
+          const total = response.length
+          const pages = Math.ceil(total / size)
+          const sliceStart = currentPage * size
+          const sliceEnd = sliceStart + size
+          setProjects(response.slice(sliceStart, sliceEnd))
+          setTotalPages(pages)
+          setTotalElements(total)
+        } else {
+          setProjects(response.content || [])
+          setTotalPages(response.totalPages ?? 0)
+          setTotalElements(response.totalElements ?? (response.content ? response.content.length : 0))
+        }
       } catch (err) {
         setError(err.message)
         console.error('Error loading projects:', err)
@@ -50,7 +61,7 @@ export function ProjectsListing() {
       }
     }
 
-    const timeoutId = setTimeout(loadProjects, 500) // Debounce search
+    const timeoutId = setTimeout(loadProjects, 300)
     return () => clearTimeout(timeoutId)
   }, [searchQuery, selectedCategory, selectedStatus, sortBy, currentPage, size])
 
@@ -60,15 +71,9 @@ export function ProjectsListing() {
   }, [searchQuery, selectedCategory, selectedStatus, sortBy])
 
   const handlePageChange = (page) => {
+    if (page < 0 || page >= totalPages) return
     setCurrentPage(page)
-  }
-
-  const handleClearFilters = () => {
-    setSearchQuery("")
-    setSelectedCategory("All Categories")
-    setSelectedStatus("all")
-    setSortBy("newest")
-    setCurrentPage(0)
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
   }
 
   return (
@@ -118,22 +123,32 @@ export function ProjectsListing() {
           <p className="text-muted-foreground">Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm để tìm thêm dự án.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project) => (
-            <ProjectCard key={project.projectId} project={project} />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {projects.map((project) => (
+              <ProjectCard key={project.projectId} project={project} />
+            ))}
+          </div>
 
-      {!loading && !error && projects.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          totalElements={totalElements}
-          size={size}
-        />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalElements={totalElements}
+              size={size}
+            />
+          )}
+        </>
       )}
     </div>
   )
+
+  function handleClearFilters() {
+    setSearchQuery("")
+    setSelectedCategory("All Categories")
+    setSelectedStatus("all")
+    setSortBy("newest")
+    setCurrentPage(0)
+  }
 }

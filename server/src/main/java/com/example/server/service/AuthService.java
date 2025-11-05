@@ -66,6 +66,10 @@ public class AuthService {
                         return roleRepository.save(newRole);
                     });
 
+            // Khởi tạo HashSet nếu roles là null
+            if (user.getRoles() == null) {
+                user.setRoles(new HashSet<>());
+            }
             user.getRoles().add(defaultRole);
             user.setAuthProvider(AuthenticationProvider.LOCAL);
             userRepository.save(user);
