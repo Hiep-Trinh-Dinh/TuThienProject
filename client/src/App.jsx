@@ -33,8 +33,6 @@ function App() {
           <Route path="/verifyemail" element={<VerifyMailForm />} />
           <Route path="/verifyotp/:email" element={<VerifyOtpForm />} />
           <Route path="/changepassword/:email" element={<ChangePasswordForm />} />
-          <Route path="/account" element={<AccountSection />} />
-          <Route path="/account/pending-camps/" element={<PendingCampSection />} />
 
           {/* Protected routes */}
           <Route
@@ -53,6 +51,23 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route 
+            path="/account/pending-camps/" 
+            element={
+              <ProtectedRoute>
+                <PendingCampSection />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/account" 
+            element={
+              <ProtectedRoute>
+                <AccountSection />
+              </ProtectedRoute>
+            } 
+          />
+
       </Routes>
       <Footer />
     </BrowserRouter>

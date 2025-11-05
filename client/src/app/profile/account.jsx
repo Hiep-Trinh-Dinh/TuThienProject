@@ -101,13 +101,13 @@ function AccountSection(){
                             Explore our projects and find one that matches your interests to make a difference!</p>
                     </div>
                     
-                    <div class="mt-8 mb-5 relative flex flex-col items-center text-center">
-                        <div class="mb-5">
+                    <div className="mt-8 mb-5 relative flex flex-col items-center text-center">
+                        <div className="mb-5">
                             <img src="https://givenow.vn/wp-content/themes/funlin-progression-child/images/no-records.png" alt="..."></img>
                         </div>
 
                         <div>
-                            <a href="/projects" class="button">DISCOVER OUR PROJECTS</a>
+                            <a href="/projects" className="button">DISCOVER OUR PROJECTS</a>
                         </div>
                     </div>
                     
