@@ -14,8 +14,6 @@ import { Label } from "../ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Link,useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
-import { useEffect } from "react"
-
 
 export function LoginForm() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -29,17 +27,6 @@ export function LoginForm() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name] : e.target.value});
   }
-  
-  useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const errorMessage = params.get("errorMessage");
-  
-      if (errorMessage) {
-        setSnackBarMessage("This email address has been used. Please try again with another email address.");
-        setSnackBarErrorOpen(true);
-      }
-    }, []);
-
   // cài đặt thêm thông báo error
   const [snackBarErrorOpen, setSnackBarErrorOpen] = useState(false);
   const [snackBarSuccessOpen, setSnackSuccessBarOpen] = useState(false);

@@ -1,5 +1,5 @@
 -- Sample data for Charity Web Application - Projects Only
--- Insert sample users first (required for foreign key constraint)
+-- Insert sample users first (required for eign key constraint)
 -- Password for all users: "password123"
 INSERT INTO users (user_id, full_name, email, password_hash, role, phone, status, created_at) VALUES
 (1, 'Tổ chức từ thiện A', 'org1@charity.org', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', '0123456789', 'active', NOW()),

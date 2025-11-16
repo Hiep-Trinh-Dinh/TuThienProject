@@ -11,6 +11,7 @@ import { Checkbox } from "../ui/checkbox"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Heart, CreditCard, Shield, Users } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import QRCode from "react-qr-code"
 
 const donationAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000]
 
@@ -21,16 +22,40 @@ export function DonationSection({ project }) {
   const [isCustom, setIsCustom] = useState(false)
   const [isMonthly, setIsMonthly] = useState(false)
   const [isAnonymous, setIsAnonymous] = useState(false)
+  const [note, setNote] = useState("")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const navigate = useNavigate();
+  const [errorMsg, setErrorMsg] = useState("")
+  const navigate = useNavigate()
+
+  // QR code + donation info
+  const [qrPayUrl, setQrPayUrl] = useState(null)
+  const [currentDonation, setCurrentDonation] = useState(null)
+
   const finalAmount = isCustom ? Number.parseFloat(customAmount) || 0 : selectedAmount
+
+  const getUserIdFromStorage = () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("charity-user"))
+      return userData?.userId || null
+    } catch (error) {
+      console.error("Error getting user ID:", error)
+      return null
+    }
+  }
+
+  const validateDonation = () => {
+    if (finalAmount < 50000) {
+      return "Số tiền quyên góp tối thiểu là 50,000 VNĐ"
+    }
+    return null
+  }
+
   const handleDonate = async (e) => {
     e.preventDefault()
-
+    const userId = getUserIdFromStorage()
 
     if (!user) {
-      // Redirect to login with return URL
       const pid = project.projectId
       window.location.href = `/login?redirect=/projects/${pid}`
       return
@@ -41,219 +66,287 @@ export function DonationSection({ project }) {
       return
     }
 
-    if(!user.phone){
-      alert("Nhập đầy đủ thông tin trước khi quyên góp")
-      navigate(`/profile/${user.id}`);
+    // if (!user.phone) {
+    //   alert("Nhập đầy đủ thông tin trước khi quyên góp")
+    //   navigate(`/profile/${userId}`)
+    //   return
+    // }
+
+    setErrorMsg("")
+    const err = validateDonation()
+    if (err) {
+      setErrorMsg(err)
       return
     }
 
     setLoading(true)
 
-    // Simulate donation processing
-    setTimeout(() => {
-      setSuccess(true)
-      setLoading(false)
+    try {
+      const response = await fetch("http://localhost:8080/api/donations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          projectId: project.projectId,
+          donorId: userId,
+          amount: finalAmount,
+          paymentMethod: "momo",
+        }),
+      })
 
-      // Reset form after success
-      setTimeout(() => {
-        setSuccess(false)
-        setSelectedAmount(50)
-        setCustomAmount("")
-        setIsCustom(false)
-      }, 3000)
-    }, 2000)
+      console.log("Response status:", response.status)
+
+      if (!response.ok) {
+        let message = "Failed to create donation"
+        try {
+          const errorData = await response.json()
+          if (errorData && errorData.message) {
+            message = errorData.message
+          }
+        } catch (err) {
+          const text = await response.text()
+          if (text) message = text
+        }
+        throw new Error(message)
+      }
+
+      const donation = await response.json()
+      console.log("Donation response:", donation)
+
+      // ✅ Hiển thị QR MoMo tại chỗ, không redirect nữa
+      if (donation.payUrl) {
+        setCurrentDonation(donation)
+        setQrPayUrl(donation.payUrl)
+      } else {
+        throw new Error("Không nhận được payUrl từ server")
+      }
+
+      setLoading(false)
+    } catch (error) {
+      console.error(error)
+      setErrorMsg(error.message)
+      setLoading(false)
+    }
   }
 
   if (success) {
     return (
-      <Card className="sticky top-4">
-        <CardContent className="p-6 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">Thank You!</h3>
-          <p className="text-muted-foreground mb-4">
-            Quyên góp {finalAmount.toLocaleString()} VNĐ của bạn đã được xử lý thành công. Bạn đang tạo ra sự khác biệt thực sự!
-          </p>
-          <Button variant="outline" onClick={() => setSuccess(false)} className="w-full">
-            Quyên góp lại
-          </Button>
-        </CardContent>
-      </Card>
+        <Card className="sticky top-4">
+          <CardContent className="p-6 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Heart className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Thank You!</h3>
+            <p className="text-muted-foreground mb-4">
+              Quyên góp {finalAmount.toLocaleString()} VNĐ của bạn đã được xử lý thành công. Bạn đang tạo ra sự khác
+              biệt thực sự!
+            </p>
+            <Button variant="outline" onClick={() => setSuccess(false)} className="w-full">
+              Quyên góp lại
+            </Button>
+          </CardContent>
+        </Card>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="sticky top-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-primary" />
-            Hỗ trợ dự án này
-          </CardTitle>
-          <CardDescription>Mỗi quyên góp đều giúp chúng ta tiến gần hơn đến mục tiêu</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleDonate} className="space-y-6">
-            {/* Donation Amount Selection */}
-            <div className="space-y-4">
-              <Label>Chọn số tiền</Label>
-              <RadioGroup
-                value={isCustom ? "custom" : selectedAmount.toString()}
-                onValueChange={(value) => {
-                  if (value === "custom") {
-                    setIsCustom(true)
-                  } else {
-                    setIsCustom(false)
-                    setSelectedAmount(Number.parseInt(value))
-                  }
-                }}
-              >
-                <div className="grid grid-cols-2 gap-2">
-                  {donationAmounts.map((amount) => (
-                    <div key={amount} className="flex items-center space-x-2">
-                      <RadioGroupItem value={amount.toString()} id={`amount-${amount}`} />
-                      <Label htmlFor={`amount-${amount}`} className="cursor-pointer">
-                        {amount.toLocaleString()} VNĐ
-                      </Label>
+      <div className="space-y-6">
+        <Card className="sticky top-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-primary" />
+              Hỗ trợ dự án này
+            </CardTitle>
+            <CardDescription>Mọi quyên góp đều giúp chúng ta tiến gần hơn đến mục tiêu</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleDonate} className="space-y-6">
+              {/* Error Message */}
+              {errorMsg && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{errorMsg}</AlertDescription>
+                  </Alert>
+              )}
+
+              {/* Donation Amount Selection */}
+              <div className="space-y-4">
+                <Label>Chọn số tiền</Label>
+                <RadioGroup
+                    value={isCustom ? "custom" : selectedAmount.toString()}
+                    onValueChange={(value) => {
+                      if (value === "custom") {
+                        setIsCustom(true)
+                      } else {
+                        setIsCustom(false)
+                        setSelectedAmount(Number.parseInt(value))
+                      }
+                    }}
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    {donationAmounts.map((amount) => (
+                        <div key={amount} className="flex items-center space-x-2">
+                          <RadioGroupItem value={amount.toString()} id={`amount-${amount}`} />
+                          <Label htmlFor={`amount-${amount}`} className="cursor-pointer">
+                            {amount.toLocaleString()} VNĐ
+                          </Label>
+                        </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" id="custom-amount" />
+                    <Label htmlFor="custom-amount" className="cursor-pointer">
+                      Số tiền tùy chỉnh
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                {isCustom && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-input">Nhập số tiền (VNĐ)</Label>
+                      <Input
+                          id="custom-input"
+                          type="number"
+                          min="50000"
+                          step="1000"
+                          placeholder="Nhập số tiền"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                      />
                     </div>
-                  ))}
-                </div>
+                )}
+              </div>
+
+              {/* Donation Options */}
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="custom" id="custom-amount" />
-                  <Label htmlFor="custom-amount" className="cursor-pointer">
-                    Số tiền tùy chỉnh
+                  <Checkbox id="monthly" checked={isMonthly} onCheckedChange={setIsMonthly} />
+                  <Label htmlFor="monthly" className="text-sm">
+                    Quyên góp hàng tháng
                   </Label>
                 </div>
-              </RadioGroup>
 
-              {isCustom && (
-                <div className="space-y-2">
-                  <Label htmlFor="custom-input">Nhập số tiền (VNĐ)</Label>
-                  <Input
-                    id="custom-input"
-                    type="number"
-                    min="50000"
-                    step="1000"
-                    placeholder="Nhập số tiền"
-                    value={customAmount}
-                    onChange={(e) => setCustomAmount(e.target.value)}
-                  />
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="anonymous" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+                  <Label htmlFor="anonymous" className="text-sm">
+                    Quyên góp ẩn danh
+                  </Label>
                 </div>
-              )}
-            </div>
-
-            {/* Donation Options */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="monthly" checked={isMonthly} onCheckedChange={setIsMonthly} />
-                <Label htmlFor="monthly" className="text-sm">
-                  Quyên góp hàng tháng
-                </Label>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox id="anonymous" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-                <Label htmlFor="anonymous" className="text-sm">
-                  Quyên góp ẩn danh
-                </Label>
-              </div>
-            </div>
-
-            {/* Donation Summary */}
-            {finalAmount > 0 && (
-              <div className="bg-primary/5 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Số tiền quyên góp:</span>
-                  <span className="font-medium">{finalAmount.toLocaleString()} VNĐ</span>
-                </div>
-                {isMonthly && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Tần suất:</span>
-                    <span>Hàng tháng</span>
+              {/* Donation Summary */}
+              {finalAmount > 0 && (
+                  <div className="bg-primary/5 p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between">
+                      <span>Số tiền quyên góp:</span>
+                      <span className="font-medium">{finalAmount.toLocaleString()} VNĐ</span>
+                    </div>
+                    {isMonthly && (
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Tần suất:</span>
+                          <span>Hàng tháng</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Phí xử lý:</span>
+                      <span>0 VNĐ (chúng tôi chi trả)</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between font-medium">
+                      <span>Tổng cộng:</span>
+                      <span>{finalAmount.toLocaleString()} VNĐ</span>
+                    </div>
                   </div>
-                )}
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Phí xử lý:</span>
-                  <span>0 VNĐ (chúng tôi chi trả)</span>
-                </div>
-                <div className="border-t pt-2 flex justify-between font-medium">
-                  <span>Tổng cộng:</span>
-                  <span>{finalAmount.toLocaleString()} VNĐ</span>
-                </div>
-              </div>
-            )}
-
-            {/* Login Required Alert */}
-            {!user && (
-              <Alert>
-                <Shield className="h-4 w-4" />
-                <AlertDescription>
-                  Vui lòng{" "}
-                  <Link to={`/login?redirect=/projects/${project.projectId}`} className="text-primary hover:underline">
-                    đăng nhập
-                  </Link>{" "}
-                  hoặc{" "}
-                  <Link to={`/register?redirect=/projects/${project.projectId}`} className="text-primary hover:underline">
-                    tạo tài khoản
-                  </Link>{" "}
-                  để quyên góp.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Donate Button */}
-            <Button type="submit" className="w-full" size="lg" disabled={loading || !user || finalAmount < 50000}>
-              {loading ? (
-                "Đang xử lý..."
-              ) : (
-                <>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Quyên góp {finalAmount > 0 ? finalAmount.toLocaleString() : "0"} VNĐ
-                  {isMonthly && "/tháng"}
-                </>
               )}
-            </Button>
 
-            {/* Security Notice */}
-            <div className="text-xs text-muted-foreground text-center space-y-1">
-              <div className="flex items-center justify-center gap-1">
-                <Shield className="h-3 w-3" />
-                <span>Quyên góp an toàn với mã hóa tiêu chuẩn ngành</span>
-              </div>
-              <div>Quyên góp của bạn có thể được khấu trừ thuế. Biên lai sẽ được gửi qua email.</div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              {/* QR thanh toán MoMo */}
+              {qrPayUrl && (
+                  <div className="mt-4 flex flex-col items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      Quét mã QR bằng ứng dụng <b>MoMo</b> để hoàn tất thanh toán
+                    </p>
+                    <QRCode value={qrPayUrl} size={180} />
+                    <a
+                        href={qrPayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline mt-2"
+                    >
+                      Hoặc bấm vào đây nếu bạn đang dùng điện thoại
+                    </a>
+                  </div>
+              )}
 
-      {/* Recent Donors */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Người ủng hộ gần đây
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { name: "Nguyễn Văn A", amount: 200000, time: "2 giờ trước" },
-              { name: "Ẩn danh", amount: 100000, time: "5 giờ trước" },
-              { name: "Trần Thị B", amount: 500000, time: "1 ngày trước" },
-              { name: "Lê Văn C", amount: 150000, time: "2 ngày trước" },
-            ].map((donor, index) => (
-              <div key={index} className="flex justify-between items-center text-sm">
-                <div>
-                  <div className="font-medium">{donor.name}</div>
-                  <div className="text-muted-foreground">{donor.time}</div>
+              {/* Login Required Alert */}
+              {!user && (
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      Vui lòng{" "}
+                      <Link to={`/login?redirect=/projects/${project.projectId}`} className="text-primary hover:underline">
+                        đăng nhập
+                      </Link>{" "}
+                      hoặc{" "}
+                      <Link to={`/register?redirect=/projects/${project.projectId}`} className="text-primary hover:underline">
+                        tạo tài khoản
+                      </Link>{" "}
+                      để quyên góp.
+                    </AlertDescription>
+                  </Alert>
+              )}
+
+              {/* Donate Button */}
+              <Button type="submit" className="w-full" size="lg" disabled={loading || !user || finalAmount < 50000}>
+                {loading ? (
+                    "Đang xử lý..."
+                ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Quyên góp {finalAmount > 0 ? finalAmount.toLocaleString() : "0"} VNĐ
+                      {isMonthly && "/tháng"}
+                    </>
+                )}
+              </Button>
+
+              {/* Security Notice */}
+              <div className="text-xs text-muted-foreground text-center space-y-1">
+                <div className="flex items-center justify-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  <span>Quyên góp an toàn với mã hóa tiêu chuẩn ngành</span>
                 </div>
-                <div className="font-medium text-primary">{donor.amount.toLocaleString()} VNĐ</div>
+                <div>Quyên góp của bạn có thể được khấu trừ thuế. Biên lai sẽ được gửi qua email.</div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Recent Donors */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Người ủng hộ gần đây
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { name: "Nguyễn Văn A", amount: 200000, time: "2 giờ trước" },
+                { name: "Ẩn danh", amount: 100000, time: "5 giờ trước" },
+                { name: "Trần Thị B", amount: 500000, time: "1 ngày trước" },
+                { name: "Lê Văn C", amount: 150000, time: "2 ngày trước" },
+              ].map((donor, index) => (
+                  <div key={index} className="flex justify-between items-center text-sm">
+                    <div>
+                      <div className="font-medium">{donor.name}</div>
+                      <div className="text-muted-foreground">{donor.time}</div>
+                    </div>
+                    <div className="font-medium text-primary">{donor.amount.toLocaleString()} VNĐ</div>
+                  </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
   )
 }
