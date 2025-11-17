@@ -11,7 +11,7 @@ import { Checkbox } from "../ui/checkbox"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Heart, CreditCard, Shield, Users } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-import QRCode from "react-qr-code"
+import QRCode from "react-qr-code";
 
 const donationAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000]
 
@@ -25,12 +25,13 @@ export function DonationSection({ project }) {
   const [note, setNote] = useState("")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
+  const [errorMsg, setErrorMsg] = useState("") // ĐÃ THÊM
   const navigate = useNavigate()
 
-  // QR code + donation info
-  const [qrPayUrl, setQrPayUrl] = useState(null)
-  const [currentDonation, setCurrentDonation] = useState(null)
+  //Tạo thêm QR code
+  const [qrPayUrl, setQrPayUrl] = useState(null);
+  const [currentDonation, setCurrentDonation] = useState(null);
+  const [error, setError] = useState(null);
 
   const finalAmount = isCustom ? Number.parseFloat(customAmount) || 0 : selectedAmount
 
@@ -44,11 +45,26 @@ export function DonationSection({ project }) {
     }
   }
 
+  // ĐÃ THÊM function validateDonation
   const validateDonation = () => {
     if (finalAmount < 50000) {
       return "Số tiền quyên góp tối thiểu là 50,000 VNĐ"
     }
     return null
+  }
+
+  // ĐÃ CHUYỂN resetFormState ra ngoài handleDonate
+  const resetFormState = () => {
+    setTimeout(() => {
+      setSuccess(false)
+      setSelectedAmount(100000)
+      setCustomAmount("")
+      setIsCustom(false)
+      setIsMonthly(false)
+      setIsAnonymous(false)
+      setNote("")
+      window.location.reload()
+    }, 3000)
   }
 
   const handleDonate = async (e) => {
@@ -65,7 +81,7 @@ export function DonationSection({ project }) {
       alert("Số tiền quyên góp tối thiểu là 50,000 VNĐ")
       return
     }
-
+    alert(userId);
     // if (!user.phone) {
     //   alert("Nhập đầy đủ thông tin trước khi quyên góp")
     //   navigate(`/profile/${userId}`)
@@ -82,50 +98,46 @@ export function DonationSection({ project }) {
     setLoading(true)
 
     try {
-      const response = await fetch("http://localhost:8080/api/donations", {
-        method: "POST",
+      const response = await fetch('http://localhost:8080/api/donations', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           projectId: project.projectId,
           donorId: userId,
           amount: finalAmount,
-          paymentMethod: "momo",
-        }),
+          paymentMethod: 'momo'
+        })
       })
 
-      console.log("Response status:", response.status)
+      console.log('Response status:', response.status)
 
       if (!response.ok) {
-        let message = "Failed to create donation"
-        try {
-          const errorData = await response.json()
-          if (errorData && errorData.message) {
-            message = errorData.message
-          }
-        } catch (err) {
-          const text = await response.text()
-          if (text) message = text
-        }
-        throw new Error(message)
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create donation')
       }
 
       const donation = await response.json()
-      console.log("Donation response:", donation)
 
-      // ✅ Hiển thị QR MoMo tại chỗ, không redirect nữa
+      //Chuyển trang thanh toán Momo
       if (donation.payUrl) {
-        setCurrentDonation(donation)
-        setQrPayUrl(donation.payUrl)
-      } else {
-        throw new Error("Không nhận được payUrl từ server")
+        window.location.href =donation.payUrl
+        setLoading(false)
       }
 
+      //QR thanh toán tại trang( không chuyển trang - chưa thành công)
+      // if (donation.payUrl) {
+      //   setCurrentDonation(donation)
+      //   setQrPayUrl(donation.payUrl)
+      // } else {
+      //   throw new Error("Không nhận được payUrl từ server")
+      // }
+
       setLoading(false)
-    } catch (error) {
-      console.error(error)
+
+    } catch(error) {
       setErrorMsg(error.message)
       setLoading(false)
     }
@@ -140,8 +152,7 @@ export function DonationSection({ project }) {
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">Thank You!</h3>
             <p className="text-muted-foreground mb-4">
-              Quyên góp {finalAmount.toLocaleString()} VNĐ của bạn đã được xử lý thành công. Bạn đang tạo ra sự khác
-              biệt thực sự!
+              Quyên góp {finalAmount.toLocaleString()} VNĐ của bạn đã được xử lý thành công. Bạn đang tạo ra sự khác biệt thực sự!
             </p>
             <Button variant="outline" onClick={() => setSuccess(false)} className="w-full">
               Quyên góp lại
@@ -163,7 +174,7 @@ export function DonationSection({ project }) {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleDonate} className="space-y-6">
-              {/* Error Message */}
+              {/* Error Message - ĐÃ THÊM */}
               {errorMsg && (
                   <Alert variant="destructive">
                     <AlertDescription>{errorMsg}</AlertDescription>
@@ -256,24 +267,6 @@ export function DonationSection({ project }) {
                       <span>Tổng cộng:</span>
                       <span>{finalAmount.toLocaleString()} VNĐ</span>
                     </div>
-                  </div>
-              )}
-
-              {/* QR thanh toán MoMo */}
-              {qrPayUrl && (
-                  <div className="mt-4 flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      Quét mã QR bằng ứng dụng <b>MoMo</b> để hoàn tất thanh toán
-                    </p>
-                    <QRCode value={qrPayUrl} size={180} />
-                    <a
-                        href={qrPayUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary underline mt-2"
-                    >
-                      Hoặc bấm vào đây nếu bạn đang dùng điện thoại
-                    </a>
                   </div>
               )}
 
