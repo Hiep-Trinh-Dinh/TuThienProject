@@ -102,6 +102,27 @@ class ProjectService {
     }
   }
 
+  async uploadProjectImage(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error uploading project image:', error);
+      throw error;
+    }
+  }
+
   // Cập nhật dự án
   async updateProject(id, projectData) {
     try {

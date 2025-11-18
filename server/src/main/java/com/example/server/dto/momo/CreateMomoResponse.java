@@ -1,4 +1,4 @@
-package com.example.server.dto.payment;
+package com.example.server.dto.momo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

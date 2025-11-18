@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
     setUser(userData)
     // Lưu vào localStorage để dùng khi reload trang
     localStorage.setItem("charity-user", JSON.stringify(userData));
+    return userData;
   }
 
 

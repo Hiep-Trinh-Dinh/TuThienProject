@@ -15,6 +15,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
@@ -24,35 +25,39 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @RequiredArgsConstructor
 @EnableMethodSecurity
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class SecurityConfig {
 
-    JwtFilter jwtFilter;
-    UserDetailsService userDetailsService;
-    OAuth2SuccessHandler oAuth2SuccessHandler;
-    EncoderConfig encoderConfig;
+    final JwtFilter jwtFilter;
+    final UserDetailsService userDetailsService;
+    final OAuth2SuccessHandler oAuth2SuccessHandler;
+    final EncoderConfig encoderConfig;
+    final CustomOAuth2UserService customOAuth2UserService;
 
-    CustomOAuth2UserService customOAuth2UserService;
 
-    String[] PUBLIC_ENDPOINTS = {"/api/accounts/register",
+    static final String[] PUBLIC_ENDPOINTS = {"/api/accounts/register",
             "/api/auth/login", "/api/projects/**", "/api/auth/logout", "/api/auth/introspect",
-            "/oauth2/**",
+            "/oauth2/**", "/api/forgotPassword/**","/api/accounts/register/confirmToken",
+            "/uploads/**"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/oauth2/authorization/google")
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
                         .authorizationEndpoint(authorization -> authorization

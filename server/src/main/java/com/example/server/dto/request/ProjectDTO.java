@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,6 +18,7 @@ public class ProjectDTO {
     private Long orgId;
     private String title;
     private String description;
+    private String imageUrl;
     private String category;
     private BigDecimal goalAmount;
     private BigDecimal raisedAmount;
@@ -35,6 +37,7 @@ public class ProjectDTO {
         dto.setOrgId(project.getOrgId());
         dto.setTitle(project.getTitle());
         dto.setDescription(project.getDescription());
+        dto.setImageUrl(project.getImageUrl());
         dto.setCategory(project.getCategory().name().toLowerCase());
         dto.setGoalAmount(project.getGoalAmount());
         dto.setRaisedAmount(project.getRaisedAmount());
@@ -52,7 +55,8 @@ public class ProjectDTO {
         // Calculate progress percentage
         if (project.getGoalAmount() != null && project.getRaisedAmount() != null && 
             project.getGoalAmount().compareTo(BigDecimal.ZERO) > 0) {
-            double progress = project.getRaisedAmount().divide(project.getGoalAmount(), 4, BigDecimal.ROUND_HALF_UP)
+            double progress = project.getRaisedAmount()
+                                   .divide(project.getGoalAmount(), 4, RoundingMode.HALF_UP)
                                    .multiply(BigDecimal.valueOf(100)).doubleValue();
             dto.setProgressPercentage(Math.min(100.0, progress));
         } else {

@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.example.server.service.NotificationProducer;
+import com.example.server.dto.request.MailBodyRequest;
+import com.example.server.repository.UserRepository;
 
 @Service
 @Transactional
@@ -24,6 +27,12 @@ public class DonationService {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private NotificationProducer notificationProducer;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // Tạo donation mới
     public Donation createDonation(Donation donation) {
@@ -42,6 +51,21 @@ public class DonationService {
             // Nếu payment thành công, cập nhật raised amount của project
             if (status == Donation.PaymentStatus.success) {
                 updateProjectRaisedAmount(donation.getProjectId());
+
+                // ---- Notify donation thành công qua queue ----
+                // Lấy email donor
+                if (donation.getDonorId() != null) {
+                    userRepository.findById(donation.getDonorId()).ifPresent(user -> {
+                        String subject = "Cảm ơn bạn đã ủng hộ dự án!";
+                        String text = "Bạn đã ủng hộ thành công cho dự án (ID: " + donation.getProjectId() + ") số tiền: " + donation.getAmount() + ". Cảm ơn bạn rất nhiều!";
+                        com.example.server.dto.request.MailBodyRequest mailBody = com.example.server.dto.request.MailBodyRequest.builder()
+                            .to(user.getEmail())
+                            .subject(subject)
+                            .text(text)
+                            .build();
+                        notificationProducer.sendNotify(mailBody);
+                    });
+                }
             }
 
             return donationRepository.save(donation);
@@ -61,9 +85,14 @@ public class DonationService {
         }
     }
 
-    // Lấy tất cả donations
+    // Lấy tất cả donations (không phân trang)
     public List<Donation> getAllDonations() {
         return donationRepository.findAll();
+    }
+
+    // Lấy tất cả donations với phân trang (mọi trạng thái)
+    public Page<Donation> getAllDonations(Pageable pageable) {
+        return donationRepository.findAll(pageable);
     }
 
     // Lấy donations theo project
@@ -106,7 +135,7 @@ public class DonationService {
         return donationRepository.countUniqueDonorsByProject(projectId);
     }
 
-    // Lấy donations gần nhất
+    // Lấy donations gần nhất (chỉ các giao dịch thành công)
     public Page<Donation> getRecentDonations(Pageable pageable) {
         return donationRepository.findRecentSuccessfulDonations(pageable);
     }

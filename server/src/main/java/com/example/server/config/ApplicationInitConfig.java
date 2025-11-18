@@ -3,7 +3,6 @@ package com.example.server.config;
 import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.Role;
 import com.example.server.entity.User;
-import com.example.server.repository.PermissionRepository;
 import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
 import lombok.AccessLevel;
@@ -15,9 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Configuration
@@ -27,7 +24,6 @@ import java.util.Set;
 // khoi tao tai khoan admin neu trong db chua co
 public class ApplicationInitConfig {
     String admin = "admin";
-    PermissionRepository permissionRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
 
@@ -35,7 +31,8 @@ public class ApplicationInitConfig {
     ApplicationRunner applicationRunner(UserRepository userRepository){
         return args -> {
 
-            if(!userRepository.existsByFullName(admin)){
+            // Sử dụng existsByEmail để kiểm tra tài khoản theo email
+            if(userRepository.findByEmail("admin@gmail.com").isEmpty()){
 
                 Role defaultRole = roleRepository.findByName(admin)
                         .orElseGet(() -> {
@@ -43,9 +40,16 @@ public class ApplicationInitConfig {
                             Role newRole = new Role();
                             newRole.setName(admin);
                             newRole.setDescription("Default admin role");
+                            // Khởi tạo permissions để tránh LazyInitializationException
+                            newRole.setPermissions(new HashSet<>());
 
                             return roleRepository.save(newRole);
                         });
+
+                // Đảm bảo permissions được initialize để tránh LazyInitializationException
+                if (defaultRole.getPermissions() == null) {
+                    defaultRole.setPermissions(new HashSet<>());
+                }
 
                 Set<Role> roles = new HashSet<>();
                 roles.add(defaultRole);

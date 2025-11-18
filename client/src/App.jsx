@@ -17,6 +17,14 @@ import VerifyOtpForm from './app/ForgotPassword/verify-otp'
 import ChangePasswordForm from './app/ForgotPassword/change-password'
 import AccountSection from './app/profile/account'
 import PendingCampSection from './app/profile/pending-camps'
+
+// import admin layout + pages
+import AdminLayout from './app/admin/layout'
+import AdminDashboard from './app/admin/page'
+import AdminProjectList from './app/admin/projects'
+import AdminUserList from './app/admin/users'
+import AdminDonationsList from './app/admin/donations'
+
 function App() {
   return (
     <AuthProvider>
@@ -53,6 +61,28 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* ADMIN ROUTES */}
+          <Route path="/admin" element={
+            <AdminLayout>
+              <AdminDashboard />
+            </AdminLayout>
+          } />
+          <Route path="/admin/projects" element={
+            <AdminLayout>
+              <AdminProjectList />
+            </AdminLayout>
+          } />
+          <Route path="/admin/users" element={
+            <AdminLayout>
+              <AdminUserList />
+            </AdminLayout>
+          } />
+          <Route path="/admin/donations" element={
+            <AdminLayout>
+              <AdminDonationsList />
+            </AdminLayout>
+          } />
       </Routes>
       <Footer />
     </BrowserRouter>

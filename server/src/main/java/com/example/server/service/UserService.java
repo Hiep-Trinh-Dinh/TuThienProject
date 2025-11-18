@@ -170,16 +170,7 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        return UserResponse.builder()
-                .userId(user.getUserId())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
-                .authProvider(String.valueOf(user.getAuthProvider()))
-                .roles(null)
-                .build();
+        return userMapper.toUserResponse(user);
     }
 
     public void updateAuthProvider(String email, String authProviderName){
@@ -188,5 +179,18 @@ public class UserService {
                 .orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
         existing.setAuthProvider(authType);
         userRepository.save(existing);
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    public UserResponse updateUserStatus(Long id, String status) {
+        User existing = userRepository.findById(id)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        try {
+            existing.setStatus(User.Status.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_PARAM);
+        }
+        existing = userRepository.save(existing);
+        return userMapper.toUserResponse(existing);
     }
 }

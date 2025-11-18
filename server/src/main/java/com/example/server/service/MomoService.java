@@ -2,7 +2,7 @@ package com.example.server.service;
 
 import com.example.server.config.momoConfig;
 import com.example.server.dto.momo.CreateMomoRequest;
-import com.example.server.dto.payment.CreateMomoResponse;
+import com.example.server.dto.momo.CreateMomoResponse;
 import com.example.server.util.CryptoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;

@@ -52,6 +52,14 @@ public class UserController {
         return apiResponse;
     }
 
+    // cập nhật trạng thái user (lock/unlock)
+    @PatchMapping("/user/{id}/status")
+    public ApiResponse<UserResponse> updateUserStatus(@PathVariable Long id, @RequestParam String status) {
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.updateUserStatus(id, status));
+        return apiResponse;
+    }
+
     // lay danh sach tat ca users
     @GetMapping
     public ApiResponse<List<UserResponse>> getUsers(){

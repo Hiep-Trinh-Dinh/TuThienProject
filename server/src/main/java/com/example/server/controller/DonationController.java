@@ -3,13 +3,14 @@ package com.example.server.controller;
 import com.example.server.dto.DonationDTO;
 import com.example.server.dto.response.PaymentResponse;
 import com.example.server.entity.Donation;
+import com.example.server.service.DonationReportService;
 import com.example.server.service.DonationService;
-import com.example.server.service.MomoService;
 import com.example.server.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,13 @@ public class DonationController {
 
     private final DonationService donationService;
     private final PaymentService paymentService;
+    private final DonationReportService donationReportService;
 
     @Autowired
-    public DonationController(DonationService donationService,
-                              PaymentService paymentService) {
+    public DonationController(DonationService donationService, PaymentService paymentService, DonationReportService donationReportService) {
         this.donationService = donationService;
         this.paymentService = paymentService;
+        this.donationReportService = donationReportService;
     }
     // Tạo donation mới
 //    @PostMapping
@@ -84,7 +86,8 @@ public class DonationController {
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Donation> donations = donationService.getRecentDonations(pageable);
+        // Lấy tất cả donations (mọi trạng thái) để trang quản trị xem đầy đủ sao kê
+        Page<Donation> donations = donationService.getAllDonations(pageable);
         Page<DonationDTO> donationDTOs = donations.map(DonationDTO::fromEntity);
         return ResponseEntity.ok(donationDTOs);
     }
@@ -179,5 +182,19 @@ public class DonationController {
                 .map(DonationDTO::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(donationDTOs);
+    }
+
+    @GetMapping("/report/excel")
+    public ResponseEntity<byte[]> exportDonationsExcel() {
+        try {
+            byte[] excelBytes = donationReportService.exportDonationsToExcel();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=donations_report.xlsx");
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheets");
+            return new ResponseEntity<>(excelBytes, headers, HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
