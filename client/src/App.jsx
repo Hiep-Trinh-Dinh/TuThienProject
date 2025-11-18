@@ -59,7 +59,7 @@ function App() {
             }
           />
           <Route 
-            path="/account/pending-camps/" 
+            path="/account/pending-camps" 
             element={
               <ProtectedRoute>
                 <PendingCampSection />
