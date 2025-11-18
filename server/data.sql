@@ -28,13 +28,13 @@ CREATE TABLE projects (
 
 -- 3. Bảng donations
 CREATE TABLE donations (
-    donation_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- đổi INT sang BIGINT
-    project_id BIGINT NOT NULL,                    -- FK: Dự án nhận quyên góp, BIGINT
-    donor_id BIGINT NOT NULL,                      -- FK: Người quyên góp, BIGINT
-    amount DECIMAL(15,2) NOT NULL,
-    payment_method ENUM('vnpay','viettel_money','momo','bank_transfer') NOT NULL,
-    payment_status ENUM('success','pending','failed') DEFAULT 'pending',
-    donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    donation_id INT AUTO_INCREMENT PRIMARY KEY, -- Mã quyên góp
+    project_id INT NOT NULL,                    -- FK: Dự án nhận quyên góp
+    donor_id INT NOT NULL,                      -- FK: Người quyên góp
+    amount DECIMAL(15,2) NOT NULL,              -- Số tiền quyên góp
+    payment_method ENUM('vnpay','viettel_money','momo','bank_transfer') NOT NULL, -- Phương thức thanh toán
+    payment_status ENUM('success','pending','failed') DEFAULT 'success', -- Trạng thái thanh toán
+    donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Thời điểm quyên góp
     FOREIGN KEY (project_id) REFERENCES projects(project_id),
     FOREIGN KEY (donor_id) REFERENCES users(user_id)
 );

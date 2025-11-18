@@ -203,7 +203,10 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
 
+<<<<<<< HEAD
         // Sử dụng mapper để trả về đầy đủ thông tin bao gồm roles
+=======
+>>>>>>> 59ed0194d068c44925bf23a0a2c452e9d3cfbe99
         return userMapper.toUserResponse(user);
     }
 
@@ -224,6 +227,7 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('admin')")
+<<<<<<< HEAD
     public UserResponse adminUpdateStatus(Long id, String status){
         User existing = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -232,6 +236,15 @@ public class UserService {
             existing.setStatus(newStatus);
         } catch (IllegalArgumentException e) {
             throw new AppException(ErrorCode.INVALID_KEY);
+=======
+    public UserResponse updateUserStatus(Long id, String status) {
+        User existing = userRepository.findById(id)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        try {
+            existing.setStatus(User.Status.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_PARAM);
+>>>>>>> 59ed0194d068c44925bf23a0a2c452e9d3cfbe99
         }
         existing = userRepository.save(existing);
         return userMapper.toUserResponse(existing);

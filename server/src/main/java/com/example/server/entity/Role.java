@@ -7,19 +7,20 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
 
+@Getter
+@Setter
 @Table(name = "role")
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @Entity
-@Getter
-@Setter
+@ToString(exclude = "permissions")
 public class Role {
     @Id
     @Column(length = 50)
@@ -32,7 +33,6 @@ public class Role {
     @Builder.Default
     Set<Permission> permissions = new HashSet<>();
 
-    // Override hashCode và equals để chỉ dùng name, tránh LazyInitializationException
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

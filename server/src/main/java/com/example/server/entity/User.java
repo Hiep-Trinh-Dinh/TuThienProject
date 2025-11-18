@@ -46,7 +46,7 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Convert(converter = com.example.server.util.AuthenticationProviderConverter.class)
+    @Convert(converter = com.example.server.converter.AuthenticationProviderConverter.class)
     @Column(name="auth_provider")
     private AuthenticationProvider authProvider;
 

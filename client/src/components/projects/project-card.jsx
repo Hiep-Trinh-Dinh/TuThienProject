@@ -4,6 +4,7 @@ import { Progress } from "../ui/progress"
 import { Badge } from "../ui/badge"
 import { Calendar, Users } from "lucide-react"
 import { Link } from "react-router-dom"
+import { resolveProjectImage } from "../../lib/utils"
 
 export function ProjectCard({ project }) {
   const id = project.projectId
@@ -23,12 +24,17 @@ export function ProjectCard({ project }) {
     'khac': 'Khác'
   }
 
+  const imageSrc = resolveProjectImage(project.imageUrl || project.image)
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
       <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-6xl opacity-20">🤝</div>
-        </div>
+        <img
+          src={imageSrc}
+          alt={project.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
         <div className="absolute top-4 left-4 flex gap-2">
           {category && (
             <Badge className="border" variant="outline">

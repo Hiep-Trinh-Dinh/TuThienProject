@@ -2,6 +2,7 @@ package com.example.server.controller;
 
 import com.example.server.dto.request.ProjectDTO;
 import com.example.server.entity.Project;
+import com.example.server.service.FileStorageService;
 import com.example.server.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -9,8 +10,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,9 @@ public class ProjectController {
     
     @Autowired
     private ProjectService projectService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
     
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
@@ -95,5 +101,15 @@ public class ProjectController {
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/upload-image")
+    public ResponseEntity<Map<String, String>> uploadProjectImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = fileStorageService.storeProjectImage(file);
+            return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Không thể upload ảnh: " + e.getMessage()));
+        }
     }
 }

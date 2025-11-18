@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getDonations, updateDonationStatus } from "../../services/donationService";
+import axios from "axios";
 
 function statusColor(status) {
   switch (status) {
@@ -27,7 +28,7 @@ export default function AdminDonationsList() {
     setLoading(true);
     setError("");
     getDonations()
-      .then(data => setDonations(Array.isArray(data) ? data : []))
+      .then(data => setDonations(Array.isArray(data) ? data : (data?.content || [])))
       .catch(() => setError("Lỗi tải dữ liệu quyên góp"))
       .finally(() => setLoading(false));
   };
@@ -59,9 +60,40 @@ export default function AdminDonationsList() {
     }
   };
 
+  // Thêm hàm xử lý xuất Excel
+  const handleExportExcel = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Token lưu sau đăng nhập
+      const response = await axios.get("/api/donations/report/excel", {
+        responseType: "blob",
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "donations_report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Xuất file Excel thất bại!");
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Quản lý Quyên góp</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          onClick={handleExportExcel}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
+        >
+          Xuất Excel sao kê
+        </button>
+      </div>
       {loading ? (
         <div>Đang tải dữ liệu...</div>
       ) : error ? (

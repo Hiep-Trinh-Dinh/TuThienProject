@@ -52,11 +52,11 @@ public class UserController {
         return apiResponse;
     }
 
-    // admin: cập nhật trạng thái user (ACTIVE/INACTIVE/BANNED)
+    // cập nhật trạng thái user (lock/unlock)
     @PatchMapping("/user/{id}/status")
     public ApiResponse<UserResponse> updateUserStatus(@PathVariable Long id, @RequestParam String status) {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.adminUpdateStatus(id, status));
+        apiResponse.setResult(userService.updateUserStatus(id, status));
         return apiResponse;
     }
 
