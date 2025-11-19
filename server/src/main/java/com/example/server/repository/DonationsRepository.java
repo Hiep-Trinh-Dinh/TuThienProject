@@ -40,6 +40,10 @@ public interface DonationsRepository extends JpaRepository<Donation, Long> {
     @Query("SELECT COUNT(DISTINCT d.donorId) FROM Donation d WHERE d.projectId = :projectId AND d.paymentStatus = 'success'")
     Long countUniqueDonorsByProject(@Param("projectId") Long projectId);
 
+    // Đếm số projects unique cho một donor
+    @Query("SELECT COUNT(DISTINCT d.projectId) FROM Donation d WHERE d.donorId = :donorId AND d.paymentStatus = 'success'")
+    Long countUniqueProjectsByDonor(@Param("donorId") Long donorId);
+
     // Top donations gần nhất
     @Query("SELECT d FROM Donation d WHERE d.paymentStatus = 'success' ORDER BY d.donatedAt DESC")
     Page<Donation> findRecentSuccessfulDonations(Pageable pageable);

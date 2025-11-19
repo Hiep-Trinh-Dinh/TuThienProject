@@ -135,6 +135,11 @@ public class DonationService {
         return donationRepository.countUniqueDonorsByProject(projectId);
     }
 
+    // Đếm số project của một donor
+    public Long countProjectsByDonor(Long donorId) {
+        return donationRepository.countUniqueProjectsByDonor(donorId);
+    }
+
     // Lấy donations gần nhất (chỉ các giao dịch thành công)
     public Page<Donation> getRecentDonations(Pageable pageable) {
         return donationRepository.findRecentSuccessfulDonations(pageable);

@@ -1,6 +1,7 @@
 package com.example.server.controller;
 
 import com.example.server.dto.request.ProjectDTO;
+import com.example.server.dto.response.ProjectStatsResponse;
 import com.example.server.entity.Project;
 import com.example.server.service.FileStorageService;
 import com.example.server.service.ProjectService;
@@ -37,6 +38,20 @@ public class ProjectController {
         return ResponseEntity.ok(projectDTOs);
     }
 
+    @GetMapping("/donated")
+    public ResponseEntity<Page<ProjectDTO>> getDonatedProjects(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false, defaultValue = "0") Long userId
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Project> projects = projectService.getDonatedProjects(pageable, userId);
+        Page<ProjectDTO> projectDTOs = projects.map(ProjectDTO::fromEntity);
+        return ResponseEntity.ok(projectDTOs);
+    }
+
+
+
     @GetMapping("/search")
     public ResponseEntity<Page<ProjectDTO>> searchProjects(
             @RequestParam(required = false) String q,
@@ -44,10 +59,12 @@ public class ProjectController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size) {
-        
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false, defaultValue = "0") Long userId)
+    {
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<Project> projects = projectService.searchProjects(q, category, status, sortBy, pageable);
+        Page<Project> projects = projectService.searchProjects(q, category, status, sortBy, pageable, userId);
         Page<ProjectDTO> projectDTOs = projects.map(ProjectDTO::fromEntity);
         return ResponseEntity.ok(projectDTOs);
     }
@@ -58,7 +75,27 @@ public class ProjectController {
         return project.map(p -> ResponseEntity.ok(ProjectDTO.fromEntity(p)))
                      .orElse(ResponseEntity.notFound().build());
     }
-    
+
+    @GetMapping("/account/{userId}")
+    public ResponseEntity<List<ProjectDTO>> getProjectsByUserId(@PathVariable Long userId) {
+        List<Project> projects = projectService.getProjectsByUserId(userId);
+        List<ProjectDTO> projectDTOs = projects.stream()
+                .map(ProjectDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(projectDTOs);
+    }
+
+    @GetMapping("/total/{userId}")
+    public ResponseEntity<Long> getTotalProjectsByUserId(@PathVariable Long userId) {
+        Long count = projectService.countProjectsByUser(userId);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/projectStats/{userId}")
+    public ResponseEntity<ProjectStatsResponse> getProjectStats(@PathVariable Long userId) {
+        ProjectStatsResponse projectStats = projectService.getProjectStats(userId);
+        return ResponseEntity.ok(projectStats);
+    }
     
     @GetMapping("/category/{category}")
     public ResponseEntity<List<ProjectDTO>> getProjectsByCategory(@PathVariable String category) {

@@ -11,3 +11,13 @@ export const updateDonationStatus = async (donationId, status) => {
   });
   return response.data;
 };
+
+export const getTotalAmountDonationsByDonor = async (donorId) => {
+  const response = await axios.get(`/donations/donor/${donorId}/total`);
+  return response.data;
+};
+
+export const getTotalDonationsByDonor = async (donorId) => {
+  const response = await axios.get(`/donations/donor/${donorId}/project-count`);
+  return response.data;
+};

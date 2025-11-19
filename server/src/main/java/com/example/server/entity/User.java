@@ -50,6 +50,14 @@ public class User {
     @Column(name="auth_provider")
     private AuthenticationProvider authProvider;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    @Column(name = "cover_photo_url", length = 500)
+    private String coverPhotoUrl;
+
+
+
     public enum Status {
         ACTIVE, INACTIVE, BANNED
     }

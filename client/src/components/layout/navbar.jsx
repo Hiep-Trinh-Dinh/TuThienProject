@@ -78,7 +78,7 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link to={`/account/pending-camps`} className="flex items-center">
                       <BookHeart className="h-4 w-4 mr-2" />
-                      Pending projects for approval
+                    Project management
                     </Link>
                   </DropdownMenuItem>
 

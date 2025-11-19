@@ -120,6 +120,18 @@ public class DonationController {
         return ResponseEntity.ok(donationDTOs);
     }
 
+    // Lấy donations theo donor ko paging
+    @GetMapping("/{donorId}")
+    public ResponseEntity<List<DonationDTO>> getDonationsByDonor(
+            @PathVariable Long donorId) {
+
+        List<Donation> donations = donationService.getDonationsByDonor(donorId);
+        List<DonationDTO> donationDTOs = donations.stream()
+                .map(DonationDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(donationDTOs);
+    }
+
     // Cập nhật payment status
     @PutMapping("/{id}/payment-status")
     public ResponseEntity<DonationDTO> updatePaymentStatus(
@@ -150,6 +162,13 @@ public class DonationController {
     @GetMapping("/project/{projectId}/donor-count")
     public ResponseEntity<Long> getDonorCountByProject(@PathVariable Long projectId) {
         Long count = donationService.countDonorsByProject(projectId);
+        return ResponseEntity.ok(count);
+    }
+
+    // Thống kê số project của donor
+    @GetMapping("/donor/{donorId}/project-count")
+    public ResponseEntity<Long> getProjectCountByDonor(@PathVariable Long donorId) {
+        Long count = donationService.countProjectsByDonor(donorId);
         return ResponseEntity.ok(count);
     }
 

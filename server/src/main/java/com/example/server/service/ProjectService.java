@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.dto.response.ProjectStatsResponse;
 import com.example.server.entity.Project;
 import com.example.server.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class ProjectService {
         return projectRepository.findByKeyword(keyword);
     }
 
-    public Page<Project> searchProjects(String q, String category, String status, String sortBy, Pageable pageable) {
+    public Page<Project> searchProjects(String q, String category, String status, String sortBy, Pageable pageable, Long userId) {
         // Create pageable with sorting
         Pageable sortedPageable = pageable;
         if (sortBy != null && !sortBy.isEmpty()) {
@@ -90,7 +91,12 @@ public class ProjectService {
             }
         }
         
-        return projectRepository.findProjectsWithFilters(q, categoryEnum, statusEnum, sortBy, sortedPageable);
+        return userId > 0 ? projectRepository.findPersonalProjectsWithFilters(q, categoryEnum, statusEnum, sortBy, userId, sortedPageable) : projectRepository.findProjectsWithFilters(q, categoryEnum, statusEnum, sortBy, sortedPageable);
+    }
+
+
+    public Page<Project> getDonatedProjects( Pageable pageable, Long userId){
+        return projectRepository.findPersonalProjects(userId, pageable);
     }
     
     public List<Project> getProjectsSortedBy(String sortBy) {
@@ -109,6 +115,10 @@ public class ProjectService {
     public Optional<Project> getProjectById(Long id) {
         return projectRepository.findById(id);
     }
+
+    public  List<Project> getProjectsByUserId(Long userId) {
+        return projectRepository.findByOrgId(userId);
+    }
     
     public Project saveProject(Project project) {
         return projectRepository.save(project);
@@ -126,5 +136,14 @@ public class ProjectService {
             return projectRepository.save(project);
         }
         return null;
+    }
+
+    // Đếm số project của một user
+    public Long countProjectsByUser(Long userId) {
+        return projectRepository.countUniqueProjectsByUser(userId);
+    }
+
+    public ProjectStatsResponse getProjectStats(Long userId){
+        return projectRepository.getProjectStats(userId);
     }
 }

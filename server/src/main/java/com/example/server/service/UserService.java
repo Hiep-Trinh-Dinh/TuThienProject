@@ -20,7 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +40,7 @@ public class UserService {
     RoleRepository roleRepository;
     ConfirmationTokenRepository confirmationTokenRepository;
     EmailService emailService;
+    FileStorageService fileStorageService;
 
     public UserResponse createUser(RegisterRequestDTO request){
         if(userRepository.findByEmail(request.getEmail()).isPresent()){
@@ -101,7 +104,7 @@ public class UserService {
     }
 
     // this update info function is designed for USER
-    @PreAuthorize("hasRole('user')")
+    @PreAuthorize("hasRole('user') || hasRole('admin')")
     public UserResponse updateUserById(Long id, UpdateUserInfoRequestDTO user){
         User existing = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -114,7 +117,53 @@ public class UserService {
             }
             existing.setPhone(phone);
         }
+        if(user.getAvatarUrl() != null){
+            existing.setAvatarUrl(user.getAvatarUrl());
+        }
+        if(user.getCoverPhotoUrl() != null){
+            existing.setCoverPhotoUrl(user.getCoverPhotoUrl());
+        }
         return userMapper.toUserResponse(userRepository.save(existing));
+    }
+
+    public User updateUserAvatar(Long userId, MultipartFile avatarFile) throws IOException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + userId));
+
+        // Delete old avatar if exists
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(user.getAvatarUrl());
+            } catch (IOException e) {
+                System.err.println("Lỗi khi xóa avatar cũ: " + e.getMessage());
+            }
+        }
+
+        // Store new avatar
+        String avatarUrl = fileStorageService.storeUserAvatar(avatarFile);
+        user.setAvatarUrl(avatarUrl);
+
+        return userRepository.save(user);
+    }
+
+    public User updateUserCoverPhoto(Long userId, MultipartFile coverFile) throws IOException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + userId));
+
+        // Delete old cover if exists
+        if (user.getCoverPhotoUrl() != null && !user.getCoverPhotoUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(user.getCoverPhotoUrl());
+            } catch (IOException e) {
+                System.err.println("Lỗi khi xóa cover cũ: " + e.getMessage());
+            }
+        }
+
+        // Store new cover
+        String coverUrl = fileStorageService.storeUserCover(coverFile);
+        user.setCoverPhotoUrl(coverUrl);
+
+        return userRepository.save(user);
     }
 
     // this updating info function is designed for admin
@@ -203,10 +252,6 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
 
-<<<<<<< HEAD
-        // Sử dụng mapper để trả về đầy đủ thông tin bao gồm roles
-=======
->>>>>>> 59ed0194d068c44925bf23a0a2c452e9d3cfbe99
         return userMapper.toUserResponse(user);
     }
 
@@ -227,16 +272,6 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('admin')")
-<<<<<<< HEAD
-    public UserResponse adminUpdateStatus(Long id, String status){
-        User existing = userRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        try {
-            User.Status newStatus = User.Status.valueOf(status);
-            existing.setStatus(newStatus);
-        } catch (IllegalArgumentException e) {
-            throw new AppException(ErrorCode.INVALID_KEY);
-=======
     public UserResponse updateUserStatus(Long id, String status) {
         User existing = userRepository.findById(id)
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -244,9 +279,10 @@ public class UserService {
             existing.setStatus(User.Status.valueOf(status.toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new AppException(ErrorCode.INVALID_PARAM);
->>>>>>> 59ed0194d068c44925bf23a0a2c452e9d3cfbe99
         }
         existing = userRepository.save(existing);
         return userMapper.toUserResponse(existing);
     }
+
+
 }
