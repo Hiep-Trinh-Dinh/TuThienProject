@@ -58,11 +58,16 @@ public class DonationController {
             System.out.println("[LOG] Đã tạo donation: id=" + donation.getDonationId());
             if ("momo".equalsIgnoreCase(dto.getPaymentMethod())) {
                 // Gọi service tạo payment
-                PaymentResponse momoRes = paymentService.createPayment(donation.getAmount().longValue(), OrderInfo);
+                    PaymentResponse momoRes = paymentService.createPayment(
+                            donation.getAmount().longValue(),
+                            OrderInfo,
+                            donation.getDonationId());
+
                 System.out.println("[LOG] Đã gọi Momo, nhận orderId=" + momoRes.getOrderId());
 
 //                // Option: Gắn donationId nếu cần trả lại FE
                 momoRes.setDonationId(String.valueOf(donation.getDonationId()));
+                System.out.println("[LOG] Đã gọi Momo, nhận donationID=" + momoRes.getDonationId());
 //                // Lưu orderId vào donation để đối chiếu sau này (callback IPN)
 //                donation.setDonorId(momoRes.getOrderId());
                 System.out.println("[THÔNG BÁO] Đã lưu xong donation, đơn hàng Momo: ");
@@ -75,6 +80,7 @@ public class DonationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body((PaymentResponse) Map.of("message", "Request không hợp lệ hoặc thiếu trường"));
         } catch(Exception e) {
+            System.out.println("[LOG] đã xảy ra lỗi khi insert DB");
             return ResponseEntity.badRequest().build();
         }
     }

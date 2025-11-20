@@ -28,11 +28,11 @@ public class PaymentService {
      * DonationController chịu trách nhiệm tạo Donation trong DB,
      * hàm này chỉ lo gọi MoMo và trả payUrl, orderId,...
      */
-    public PaymentResponse createPayment(long amount, String orderInfo) throws Exception {
+    public PaymentResponse createPayment(long amount, String orderInfo, Long donationId) throws Exception {
         String orderId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
         String requestType = "captureWallet";
-        String extraData = ""; // sau này có thể nhét donationId vào đây
+        String extraData = donationId!=null? donationId.toString():"";
 
         // rawSignature đúng format theo tài liệu MoMo
         String rawSignature = String.format(
@@ -91,7 +91,7 @@ public class PaymentService {
 
         // Map sang PaymentResponse để trả về FE
         return new PaymentResponse(
-                null,                      // donationId sẽ được set ở DonationController
+                donationId != null ? donationId.toString() : null,                      // donationId sẽ được set ở DonationController
                 momoRes.getOrderId(),
                 momoRes.getPayUrl(),
                 null                       // qrCodeUrl nếu sau này cần thêm vào CreateMomoResponse

@@ -35,10 +35,18 @@ public class SecurityConfig {
     final CustomOAuth2UserService customOAuth2UserService;
 
 
-    static final String[] PUBLIC_ENDPOINTS = {"/api/accounts/register",
-            "/api/auth/login", "/api/projects/**", "/api/auth/logout", "/api/auth/introspect",
-            "/oauth2/**", "/api/forgotPassword/**","/api/accounts/register/confirmToken",
-            "/uploads/**"
+    static final String[] PUBLIC_ENDPOINTS = {
+            "/api/accounts/register",
+            "/api/auth/login",
+            "/api/projects/**",
+            "/api/auth/logout",
+            "/api/auth/introspect",
+            "/oauth2/**",
+            "/api/forgotPassword/**",
+            "/api/accounts/register/confirmToken",
+            "/uploads/**",
+            "/api/payment/redirect",
+            "/api/payment/ipn"
     };
 
     @Bean

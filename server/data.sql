@@ -37,7 +37,7 @@ CREATE TABLE donations (
     donor_id INT NOT NULL,                      -- FK: Người quyên góp
     amount DECIMAL(15,2) NOT NULL,              -- Số tiền quyên góp
     payment_method ENUM('vnpay','viettel_money','momo','bank_transfer') NOT NULL, -- Phương thức thanh toán
-    payment_status ENUM('success','pending','failed') DEFAULT 'success', -- Trạng thái thanh toán
+    payment_status ENUM('success','pending','failed') DEFAULT 'pending', -- Trạng thái thanh toán
     donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Thời điểm quyên góp
     FOREIGN KEY (project_id) REFERENCES projects(project_id),
     FOREIGN KEY (donor_id) REFERENCES users(user_id)

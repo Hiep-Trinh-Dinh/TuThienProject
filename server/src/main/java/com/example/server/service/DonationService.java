@@ -55,6 +55,7 @@ public class DonationService {
                 // ---- Notify donation thành công qua queue ----
                 // Lấy email donor
                 if (donation.getDonorId() != null) {
+                    try{
                     userRepository.findById(donation.getDonorId()).ifPresent(user -> {
                         String subject = "Cảm ơn bạn đã ủng hộ dự án!";
                         String text = "Bạn đã ủng hộ thành công cho dự án (ID: " + donation.getProjectId() + ") số tiền: " + donation.getAmount() + ". Cảm ơn bạn rất nhiều!";
@@ -65,6 +66,7 @@ public class DonationService {
                             .build();
                         notificationProducer.sendNotify(mailBody);
                     });
+                    } catch (Exception e) { System.out.println("Gửi mail thất bại cho donationId=" + donationId);}
                 }
             }
 
