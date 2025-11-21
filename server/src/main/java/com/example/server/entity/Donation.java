@@ -29,17 +29,18 @@ public class Donation {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false,
-            columnDefinition = "ENUM('vnpay','viettel_money','momo','bank_transfer')")
+    @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status",
-            columnDefinition = "ENUM('success','pending','failed') DEFAULT 'pending'")
+    @Column(name = "payment_status")
     private PaymentStatus paymentStatus = PaymentStatus.pending;
 
     @Column(name = "donated_at")
     private LocalDateTime donatedAt = LocalDateTime.now();
+
+    @Column(name = "order_id", length = 100)
+    private String orderId; // Lưu orderId từ Momo để map lại khi redirect
 
     // Relationship với Project entity
     @ManyToOne(fetch = FetchType.LAZY)

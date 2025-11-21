@@ -1,19 +1,21 @@
 -- 1. Bảng users
 CREATE TABLE users (
-    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,   -- đổi từ INT sang BIGINT
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     status ENUM('ACTIVE', 'INACTIVE', 'BANNED') DEFAULT 'INACTIVE',
-    auth_provider VARCHAR(15) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    auth_provider VARCHAR(15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    avatar_url VARCHAR(500),
+    cover_photo_url VARCHAR(500)
 );
 
 -- 2. Bảng projects
 CREATE TABLE projects (
-    project_id BIGINT AUTO_INCREMENT PRIMARY KEY, -- đổi từ INT sang BIGINT
-    org_id BIGINT NOT NULL,                       -- FK: Người/tổ chức tạo dự án, đổi thành BIGINT
+    project_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    org_id BIGINT NOT NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT,
     category ENUM('tre_em','y_te','moi_truong','thien_tai','khac') NOT NULL,
@@ -28,22 +30,23 @@ CREATE TABLE projects (
 
 -- 3. Bảng donations
 CREATE TABLE donations (
-    donation_id INT AUTO_INCREMENT PRIMARY KEY, -- Mã quyên góp
-    project_id INT NOT NULL,                    -- FK: Dự án nhận quyên góp
-    donor_id INT NOT NULL,                      -- FK: Người quyên góp
-    amount DECIMAL(15,2) NOT NULL,              -- Số tiền quyên góp
-    payment_method ENUM('vnpay','viettel_money','momo','bank_transfer') NOT NULL, -- Phương thức thanh toán
-    payment_status ENUM('success','pending','failed') DEFAULT 'success', -- Trạng thái thanh toán
-    donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Thời điểm quyên góp
+    donation_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    donor_id BIGINT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    payment_method ENUM('vnpay','viettel_money','momo','credit_card','bank_transfer') NOT NULL,
+    payment_status ENUM('success','pending','failed') DEFAULT 'success',
+    donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    order_id VARCHAR(100),
     FOREIGN KEY (project_id) REFERENCES projects(project_id),
     FOREIGN KEY (donor_id) REFERENCES users(user_id)
 );
 
--- 4. Bảng ambassadors
+-- 4. Bảng ambassadors (chỉnh về BIGINT)
 CREATE TABLE ambassadors (
     ambassador_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,                   -- BIGINT
-    project_id BIGINT NOT NULL,                -- BIGINT
+    user_id BIGINT NOT NULL,
+    project_id BIGINT NOT NULL,
     share_link VARCHAR(255),
     raised_amount DECIMAL(15,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -51,7 +54,7 @@ CREATE TABLE ambassadors (
     FOREIGN KEY (project_id) REFERENCES projects(project_id)
 );
 
--- 5. Bảng reports
+-- 5. Bảng reports (BIGINT cho FK)
 CREATE TABLE reports (
     report_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     project_id BIGINT NOT NULL,
@@ -84,7 +87,7 @@ CREATE TABLE transactions_log (
 -- 8. Bảng system_logs
 CREATE TABLE system_logs (
     log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT,   -- BIGINT cho FK
+    user_id BIGINT,
     action VARCHAR(200) NOT NULL,
     ip_address VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -121,7 +124,7 @@ CREATE TABLE role_permissions (
     FOREIGN KEY (permissions_name) REFERENCES permission(name) ON DELETE CASCADE
 );
 
--- 13. Bảng confirmation_token (xác thực email đăng ký)
+-- 13. Bảng confirmation_token
 CREATE TABLE confirmation_token (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     token VARCHAR(255) NOT NULL,
@@ -132,16 +135,16 @@ CREATE TABLE confirmation_token (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 14. Bảng forgot_password (quên mật khẩu)
+-- 14. Bảng forgot_password
 CREATE TABLE forgot_password (
-    forgot_password_id INT AUTO_INCREMENT PRIMARY KEY,
+    forgot_password_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     otp INT NOT NULL,
     expiration_time DATETIME NOT NULL,
     user_user_id BIGINT,
     FOREIGN KEY (user_user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 15. Bảng invalidated_token (token đã bị vô hiệu hóa)
+-- 15. Bảng invalidated_token
 CREATE TABLE invalidated_token (
     id VARCHAR(255) PRIMARY KEY,
     expired_time DATETIME

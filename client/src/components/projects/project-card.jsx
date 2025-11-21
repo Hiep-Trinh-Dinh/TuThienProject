@@ -13,7 +13,10 @@ export function ProjectCard({ project }) {
   const donors = Number(project.donorCount || 0)
   const category = project.category
   const daysLeft = project.daysLeft
-  const progressPercentage = project.progressPercentage || 0
+  // Tính toán progressPercentage từ raised và goal nếu backend không trả về
+  const progressPercentage = project.progressPercentage !== undefined 
+    ? project.progressPercentage 
+    : (goal > 0 ? Math.min(100, (raised / goal) * 100) : 0)
 
   // Map category to Vietnamese
   const categoryMap = {

@@ -1,7 +1,7 @@
 import axios from "../axiosConfig";
 
 export const getDonations = async () => {
-  const response = await axios.get("/donations");
+  const response = await axios.get("/donations/allnoPaging");
   return response.data;
 };
 

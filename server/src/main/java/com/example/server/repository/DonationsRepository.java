@@ -22,6 +22,9 @@ public interface DonationsRepository extends JpaRepository<Donation, Long> {
     // Tìm donations theo payment status
     List<Donation> findByPaymentStatus(Donation.PaymentStatus paymentStatus);
 
+    // Tìm donation theo orderId
+    Donation findByOrderId(String orderId);
+
     // Tìm donations theo project với pagination
     Page<Donation> findByProjectId(Long projectId, Pageable pageable);
 
