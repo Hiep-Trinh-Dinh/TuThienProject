@@ -1,5 +1,6 @@
 package com.example.server.config.oauth;
 
+import com.example.server.entity.AuthenticationProvider;
 import com.example.server.entity.User;
 import com.example.server.exception.AppException;
 import com.example.server.exception.ErrorCode;
@@ -32,7 +33,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 ()->new AppException(ErrorCode.USER_NOT_FOUND)
         );
 
-        if(user.getAuthProvider().name().equals("LOCAL")){
+        if( user.getAuthProvider() == AuthenticationProvider.LOCAL){
             // Redirect về frontend
             response.sendRedirect("http://localhost:5173/login?errorMessage=USER_EXISTED");
         }else{

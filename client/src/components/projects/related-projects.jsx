@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/button"
 import { Progress } from "../ui/progress"
 import { Link } from "react-router-dom"
+import { resolveProjectImage } from "../../lib/utils"
 
 export function RelatedProjects({ projects }) {
   if (!projects || projects.length === 0) {
@@ -18,14 +19,31 @@ export function RelatedProjects({ projects }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {projects.map((project) => {
-            const progressPercentage = project.progressPercentage || 0
+            const raised = Number(project.raisedAmount || 0)
+            const goal = Number(project.goalAmount || 0)
+            // Tính toán progressPercentage từ raised và goal nếu backend không trả về
+            const progressPercentage = project.progressPercentage !== undefined 
+              ? project.progressPercentage 
+              : (goal > 0 ? Math.min(100, (raised / goal) * 100) : 0)
+
+            const imageSrc = resolveProjectImage(project.imageUrl || project.image)
+            const hasImage = imageSrc && imageSrc !== "/placeholder.svg"
 
             return (
               <Card key={project.projectId} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-6xl opacity-20">🤝</div>
-                  </div>
+                  {hasImage ? (
+                    <img
+                      src={imageSrc}
+                      alt={project.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-6xl opacity-20">🤝</div>
+                    </div>
+                  )}
                 </div>
 
                 <CardHeader>

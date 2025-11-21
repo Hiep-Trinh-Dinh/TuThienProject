@@ -10,6 +10,7 @@ export default function AdminProjectList() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    imageUrl: "",
     category: "tre_em",
     goalAmount: "",
     startDate: "",
@@ -18,12 +19,21 @@ export default function AdminProjectList() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // View/Edit modal states
   const [viewProject, setViewProject] = useState(null);
   const [editProject, setEditProject] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const [editImageUploading, setEditImageUploading] = useState(false);
+
+  // Thêm state preview image local
+  const [localImagePreview, setLocalImagePreview] = useState("");
+
+  // Thêm state preview ảnh và file ảnh local
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -37,6 +47,19 @@ export default function AdminProjectList() {
       .catch((err) => setError("Lỗi tải dữ liệu dự án"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Xử lý effect khi đổi selectedFile (và dọn dẹp Object URL)
+  useEffect(() => {
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (form.imageUrl) {
+      setPreviewUrl(form.imageUrl);
+    } else {
+      setPreviewUrl("");
+    }
+  }, [selectedFile, form.imageUrl]);
 
   const reloadProjects = async () => {
     setLoading(true);
@@ -55,6 +78,34 @@ export default function AdminProjectList() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Sửa hàm handleImageFileChange để validate url BE trả về và tránh preview lỗi
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setImageUploading(true);
+    setCreateError("");
+    try {
+      const result = await projectService.uploadProjectImage(file);
+      // Validate: chỉ set preview nếu là url đúng định dạng
+      if (
+        result.imageUrl &&
+        (result.imageUrl.startsWith("http://") || result.imageUrl.startsWith("https://") || result.imageUrl.startsWith("/uploads/"))
+      ) {
+        setForm((prev) => ({ ...prev, imageUrl: result.imageUrl }));
+        setPreviewUrl(result.imageUrl);
+        setSelectedFile(null);
+      } else {
+        setCreateError("Server trả về đường dẫn ảnh không hợp lệ: " + (result.imageUrl || "(empty)"));
+        // Vẫn giữ preview local tạm thời, KHÔNG set previewUrl bằng giá trị invalid
+      }
+    } catch (err) {
+      setCreateError("Tải ảnh thất bại. Vui lòng thử lại.");
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError("");
@@ -70,10 +121,12 @@ export default function AdminProjectList() {
         } catch {}
       }
 
+      const normalizedImageUrl = (form.imageUrl || "").trim();
       const payload = {
         orgId,
         title: form.title.trim(),
         description: form.description.trim(),
+        imageUrl: normalizedImageUrl || null,
         category: form.category, // phải khớp enum: tre_em, y_te, moi_truong, thien_tai, khac
         goalAmount: Number(form.goalAmount || 0),
         startDate: form.startDate || null,
@@ -99,7 +152,7 @@ export default function AdminProjectList() {
       setProjects(data);
       setLoading(false);
       // Reset form
-      setForm({ title: "", description: "", category: "tre_em", goalAmount: "", startDate: "", endDate: "" });
+      setForm({ title: "", description: "", imageUrl: "", category: "tre_em", goalAmount: "", startDate: "", endDate: "" });
       setShowCreateForm(false);
     } catch (err) {
       setCreateError("Tạo dự án thất bại. Vui lòng thử lại.");
@@ -129,6 +182,7 @@ export default function AdminProjectList() {
         orgId: current.orgId,
         title: current.title,
         description: current.description,
+        imageUrl: current.imageUrl,
         category: current.category,
         goalAmount: current.goalAmount,
         raisedAmount: current.raisedAmount,
@@ -152,14 +206,33 @@ export default function AdminProjectList() {
         projectId: data.projectId,
         title: data.title || "",
         description: data.description || "",
+        imageUrl: data.imageUrl || "",
         category: data.category || "tre_em",
         goalAmount: data.goalAmount || 0,
         startDate: data.startDate || "",
         endDate: data.endDate || "",
         status: data.status || "active",
+        orgId: data.orgId, // giữ lại orgId đúng
       });
     } catch (e) {
       alert("Không thể tải dữ liệu để sửa");
+    }
+  };
+
+  const handleEditImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!editProject) return;
+    setEditImageUploading(true);
+    setEditError("");
+    try {
+      const result = await projectService.uploadProjectImage(file);
+      setEditProject((prev) => prev ? ({ ...prev, imageUrl: result.imageUrl }) : prev);
+    } catch (err) {
+      console.error(err);
+      setEditError("Tải ảnh thất bại. Vui lòng thử lại");
+    } finally {
+      setEditImageUploading(false);
     }
   };
 
@@ -170,10 +243,12 @@ export default function AdminProjectList() {
     setEditSaving(true);
     setEditError("");
     try {
+      const normalizedImageUrl = (editProject.imageUrl || "").trim();
       const payload = {
-        orgId: undefined, // không cho sửa orgId từ đây
+        orgId: editProject.orgId, // giữ nguyên orgId cũ
         title: (editProject.title || "").trim(),
         description: (editProject.description || "").trim(),
+        imageUrl: normalizedImageUrl || null,
         category: editProject.category,
         goalAmount: Number(editProject.goalAmount || 0),
         startDate: editProject.startDate || null,
@@ -219,6 +294,18 @@ export default function AdminProjectList() {
           <div className="md:col-span-2">
             <label className="block font-semibold mb-1">Mô tả</label>
             <textarea name="description" value={form.description} onChange={handleChange} placeholder="Mô tả ngắn về dự án" rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block font-semibold mb-1">Ảnh dự án (bắt buộc dùng chức năng upload)</label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <input type="file" accept="image/*" onChange={handleImageFileChange} disabled={imageUploading} />
+                {imageUploading && <span className="text-sm text-muted-foreground">Đang tải ảnh...</span>}
+              </div>
+              {previewUrl && (
+                <img src={previewUrl} alt="Xem trước ảnh dự án" className="w-full max-h-60 object-cover rounded border" />
+              )}
+            </div>
           </div>
           <div>
             <label className="block font-semibold mb-1">Danh mục</label>
@@ -355,6 +442,7 @@ export default function AdminProjectList() {
               <div><b>ID:</b> {viewProject.projectId}</div>
               <div><b>Tiêu đề:</b> {viewProject.title}</div>
               <div><b>Mô tả:</b> {viewProject.description || '—'}</div>
+              <div><b>Ảnh:</b> {viewProject.imageUrl ? <a href={viewProject.imageUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">Xem ảnh</a> : '—'}</div>
               <div><b>Danh mục:</b> {viewProject.category}</div>
               <div><b>Trạng thái:</b> {viewProject.status}</div>
               <div><b>Mục tiêu:</b> {viewProject.goalAmount}</div>
@@ -384,6 +472,19 @@ export default function AdminProjectList() {
               <div className="md:col-span-2">
                 <label className="block font-semibold mb-1">Mô tả</label>
                 <textarea rows={3} value={editProject.description} onChange={(e)=>setEditProject(p=>({...p, description:e.target.value}))} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block font-semibold mb-1">Ảnh dự án (URL)</label>
+                <div className="flex flex-col gap-2">
+                  <input value={editProject.imageUrl} onChange={(e)=>setEditProject(p=>({...p, imageUrl:e.target.value}))} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <div className="flex items-center gap-3">
+                    <input type="file" accept="image/*" onChange={handleEditImageUpload} disabled={editImageUploading} />
+                    {editImageUploading && <span className="text-sm text-muted-foreground">Đang tải ảnh...</span>}
+                  </div>
+                  {editProject.imageUrl && (
+                    <img src={editProject.imageUrl} alt="Xem trước ảnh dự án" className="w-full max-h-60 object-cover rounded border" />
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block font-semibold mb-1">Danh mục</label>

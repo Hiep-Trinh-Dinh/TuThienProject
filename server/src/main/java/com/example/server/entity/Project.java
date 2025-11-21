@@ -29,6 +29,9 @@ public class Project {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, columnDefinition = "ENUM('tre_em','y_te','moi_truong','thien_tai','khac')")
     private Category category;

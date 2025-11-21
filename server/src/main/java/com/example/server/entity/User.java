@@ -46,9 +46,17 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Convert(converter = com.example.server.util.AuthenticationProviderConverter.class)
+    @Convert(converter = com.example.server.converter.AuthenticationProviderConverter.class)
     @Column(name="auth_provider")
     private AuthenticationProvider authProvider;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    @Column(name = "cover_photo_url", length = 500)
+    private String coverPhotoUrl;
+
+
 
     public enum Status {
         ACTIVE, INACTIVE, BANNED

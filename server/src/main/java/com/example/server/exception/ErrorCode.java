@@ -23,6 +23,7 @@ public enum ErrorCode {
     CURRENT_PASSWORD_CANNOT_MATCH_NEW_PASSWORD(1015,"Your new password cannot be as same as your former password!",HttpStatus.BAD_REQUEST),
     EXPIRED_OTP(1016,"Otp has expired!",HttpStatus.EXPECTATION_FAILED),
     TOKEN_NOT_FOUND(1017,"Token not found",HttpStatus.NOT_FOUND),
+    INVALID_PARAM(1009, "Invalid parameter", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

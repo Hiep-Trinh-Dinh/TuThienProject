@@ -16,7 +16,7 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
-    @Value("${jwt.secret:EZKVeLs0KeNfiTkwUeWu2VSyKdqTToT7}")
+    @Value("${jwt.secret}")
     private String secret;
 
     private final InvalidatedTokenRepository invalidatedTokenRepository;

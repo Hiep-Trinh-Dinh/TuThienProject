@@ -7,6 +7,7 @@ import RegisterPage from './app/register/page'
 import LoginPage from './app/login/page'
 import About from './components/home/about-section'
 import ProjectDetailsPage from './app/projects/[id]/page'
+import PaymentCallback from './app/payment-callback/page'
 import { AuthProvider } from "./contexts/auth-context"
 import './styles/globals.css'
 import EditProfileSection from './app/profile/edit-profile-section'
@@ -37,11 +38,10 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/payment-callback" element={<PaymentCallback />} />
           <Route path="/verifyemail" element={<VerifyMailForm />} />
           <Route path="/verifyotp/:email" element={<VerifyOtpForm />} />
           <Route path="/changepassword/:email" element={<ChangePasswordForm />} />
-          <Route path="/account" element={<AccountSection />} />
-          <Route path="/account/pending-camps/" element={<PendingCampSection />} />
 
           {/* Protected routes */}
           <Route
@@ -60,6 +60,23 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route 
+            path="/account/pending-camps" 
+            element={
+              <ProtectedRoute>
+                <PendingCampSection />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/account" 
+            element={
+              <ProtectedRoute>
+                <AccountSection />
+              </ProtectedRoute>
+            } 
+          />
+
 
           {/* ADMIN ROUTES */}
           <Route path="/admin" element={

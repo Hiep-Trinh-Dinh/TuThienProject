@@ -32,6 +32,56 @@ class ProjectService {
     }
   }
 
+  // Lấy dự án theo ID User
+  async getProjectsByUserId(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/account/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching project ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Lấy dự án theo ID User
+  async getTotalProjectsByUserId(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/total/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching project ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getProjectStats(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/projectStats/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching project ${id}:`, error);
+      throw error;
+    }
+  }
+
   // Lấy dự án theo danh mục
   async getProjectsByCategory(category) {
     try {
@@ -47,7 +97,7 @@ class ProjectService {
   }
 
   // Tìm kiếm dự án nâng cao với phân trang
-  async searchProjects(query, category, status, sortBy, page = 0, size = 6) {
+  async searchProjects(query, category, status, sortBy, page = 0, size = 6, userId = 0) {
     try {
       const params = new URLSearchParams();
       if (query) params.append('q', query);
@@ -56,8 +106,28 @@ class ProjectService {
       if (sortBy) params.append('sortBy', sortBy);
       params.append('page', page);
       params.append('size', size);
+      params.append('userId', userId);
 
       const response = await fetch(`${API_BASE_URL}/search?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error searching projects:`, error);
+      throw error;
+    }
+  }
+
+  // Tìm kiếm dự án nâng cao với phân trang
+  async getDonatedProjects(page = 0, size = 6, userId = 0) {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('size', size);
+      params.append('userId', userId);
+
+      const response = await fetch(`${API_BASE_URL}/donated?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -98,6 +168,27 @@ class ProjectService {
       return await response.json();
     } catch (error) {
       console.error('Error creating project:', error);
+      throw error;
+    }
+  }
+
+  async uploadProjectImage(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error uploading project image:', error);
       throw error;
     }
   }

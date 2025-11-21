@@ -6,12 +6,18 @@ import com.example.server.dto.request.UpdateUserInfoRequestDTO;
 import com.example.server.dto.request.UserUpdateRequest;
 import com.example.server.dto.response.ApiResponse;
 import com.example.server.dto.response.UserResponse;
+import com.example.server.entity.User;
+import com.example.server.service.FileStorageService;
 import com.example.server.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -19,6 +25,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
     private final UserService userService;
+    private final FileStorageService fileStorageService;
 
     // dang ky tao tai khoan
     @PostMapping("/register")
@@ -52,11 +59,11 @@ public class UserController {
         return apiResponse;
     }
 
-    // admin: cập nhật trạng thái user (ACTIVE/INACTIVE/BANNED)
+    // cập nhật trạng thái user (lock/unlock)
     @PatchMapping("/user/{id}/status")
     public ApiResponse<UserResponse> updateUserStatus(@PathVariable Long id, @RequestParam String status) {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.adminUpdateStatus(id, status));
+        apiResponse.setResult(userService.updateUserStatus(id, status));
         return apiResponse;
     }
 
@@ -91,4 +98,91 @@ public class UserController {
         return "Confirmed token";
     }
 
+    @PostMapping("/{userId}/avatar")
+    public ResponseEntity<?> uploadAvatar(
+            @PathVariable Long userId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            User updatedUser = userService.updateUserAvatar(userId, file);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Upload avatar thành công");
+            response.put("user", updatedUser);
+            response.put("avatarUrl", updatedUser.getAvatarUrl());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "Upload avatar thất bại: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/{userId}/cover")
+    public ResponseEntity<?> uploadCoverPhoto(
+            @PathVariable Long userId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            User updatedUser = userService.updateUserCoverPhoto(userId, file);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Upload ảnh bìa thành công");
+            response.put("user", updatedUser);
+            response.put("coverUrl", updatedUser.getCoverPhotoUrl());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "Upload ảnh bìa thất bại: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "type", defaultValue = "avatar") String type) {
+        try {
+            MultipartFile fileToUpload = file != null ? file : image;
+
+            if (fileToUpload == null || fileToUpload.isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("success", String.valueOf(false));
+                errorResponse.put("error", "No file provided");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            String fileUrl;
+
+            switch (type.toLowerCase()) {
+                case "avatar":
+                    fileUrl = fileStorageService.storeUserAvatar(fileToUpload);
+                    break;
+                case "cover":
+                    fileUrl = fileStorageService.storeUserCover(fileToUpload);
+                    break;
+                default:
+                    fileUrl = fileStorageService.storeUserAvatar(fileToUpload);
+            }
+
+            Map<String, String> response = new HashMap<>();
+            response.put("success", String.valueOf(true));
+            response.put("message", "File uploaded successfully");
+            response.put("url", fileUrl);
+            response.put("type", type);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("success", String.valueOf(false));
+            errorResponse.put("error", "Could not upload file: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
 }

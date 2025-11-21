@@ -21,4 +21,6 @@ public class UserResponse {
     LocalDateTime createdAt;
     String authProvider;
     Set<RoleResponse> roles;
+    String avatarUrl;
+    String coverPhotoUrl;
 }

@@ -4,13 +4,19 @@ import { Badge } from "../ui/badge"
 import { Progress } from "../ui/progress"
 import { Calendar, Share2 } from "lucide-react"
 import { Button } from "../ui/button"
+import { resolveProjectImage } from "../../lib/utils"
 
 export function ProjectHero({ project }) {
   const raised = Number(project.raisedAmount || 0)
   const goal = Number(project.goalAmount || 0)
-  const progressPercentage = project.progressPercentage || 0
+  // Tính toán progressPercentage từ raised và goal nếu backend không trả về
+  const progressPercentage = project.progressPercentage !== undefined 
+    ? project.progressPercentage 
+    : (goal > 0 ? Math.min(100, (raised / goal) * 100) : 0)
   const daysLeft = project.daysLeft
   const donors = project.donorCount || 0
+  const heroImage = resolveProjectImage(project.imageUrl || project.image)
+  const hasImage = heroImage && heroImage !== "/placeholder.svg"
 
   // Map category to Vietnamese
   const categoryMap = {
@@ -77,9 +83,17 @@ export function ProjectHero({ project }) {
 
           <div className="space-y-6">
             <div className="aspect-video rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-blue-50 to-indigo-100">
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-8xl opacity-20">🤝</div>
-              </div>
+              {hasImage ? (
+                <img
+                  src={heroImage}
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-8xl opacity-20">🤝</div>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm border">

@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 // User Update của user
 public class UpdateUserInfoRequestDTO {
     @NotBlank(message = "FULL_NAME_EMPTY")
@@ -16,4 +18,6 @@ public class UpdateUserInfoRequestDTO {
             message = "PHONE_INVALID"
     )
     private String phone;
+    private String avatarUrl;
+    private String coverPhotoUrl;
 }
