@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
         if (exception.getFieldError() != null) {
             enumKey = exception.getFieldError().getDefaultMessage();
         } else if (!exception.getGlobalErrors().isEmpty()) {
-            enumKey = exception.getGlobalErrors().getFirst().getDefaultMessage();
+            enumKey = exception.getGlobalErrors().get(0).getDefaultMessage();
         }
 
         // Nếu enumKey vẫn null (trường hợp hiếm), fallback
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
 
             // unwrap constraint nếu có
             var constraintViolation = exception.getBindingResult()
-                    .getAllErrors().getFirst().unwrap(ConstraintViolation.class);
+                    .getAllErrors().get(0).unwrap(ConstraintViolation.class);
 
             attributes = constraintViolation.getConstraintDescriptor().getAttributes();
         } catch (IllegalArgumentException | NullPointerException e) {
