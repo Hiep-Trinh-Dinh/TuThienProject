@@ -88,8 +88,7 @@ export function RegisterForm() {
         const res = await api.post("/accounts/register", form);
         localStorage.setItem("userEmail",form.email)
         localStorage.setItem("userPwd",form.passwordHash)
-        setSnackBarMessage("Please confirm your email address")
-        setSnackSuccessBarOpen(true)
+        navigate("/login");
       } catch (error) {
         if(error.response && error.response.status === 403){
           setSnackBarMessage(`User already exists`);

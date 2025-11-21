@@ -56,7 +56,7 @@ export function LoginForm() {
 
   if(localStorage.getItem("userEmail") 
     && localStorage.getItem("userPwd")){
-      setSnackBarMessage("Signing up successfully!")
+      setSnackBarMessage("Signing up successfully! Active your account by the link we have sent to you. Please check your email box.");
       setSnackSuccessBarOpen(true)
       localStorage.removeItem("userEmail")
       localStorage.removeItem("userPwd")

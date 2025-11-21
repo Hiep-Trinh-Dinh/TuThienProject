@@ -5,13 +5,15 @@ import { Progress } from "../ui/progress"
 import { Calendar, Share2 } from "lucide-react"
 import { Button } from "../ui/button"
 import { resolveProjectImage } from "../../lib/utils"
+import { useEffect, useState } from "react"
+import {getTotalDonorsByProjectId} from "../../services/donationService"
 
 export function ProjectHero({ project }) {
   const raised = Number(project.raisedAmount || 0)
   const goal = Number(project.goalAmount || 0)
   const progressPercentage = project.progressPercentage || 0
   const daysLeft = project.daysLeft
-  const donors = project.donorCount || 0
+  const [donors,setDonors] = useState(0);
   const heroImage = resolveProjectImage(project.imageUrl || project.image)
   const hasImage = heroImage && heroImage !== "/placeholder.svg"
 
@@ -36,6 +38,18 @@ export function ProjectHero({ project }) {
       // You could add a toast notification here
     }
   }
+
+  useEffect(() => {
+    const loadData = async () => {
+      const response = await getTotalDonorsByProjectId(project.projectId);
+      if(response){
+        setDonors(response);
+      }else{
+        setDonors(0);
+      }
+    };
+    loadData();
+  },[])
 
   return (
     <section className="relative bg-gradient-to-br from-primary/10 via-white to-primary/5 py-16">

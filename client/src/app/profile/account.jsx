@@ -60,16 +60,12 @@ function AccountSection(){
             const totalDonations = await getTotalDonationsByDonor(userId);
 
             const totalOrganizations = await projectService.getTotalProjectsByUserId(userId);
+            
+            totalAmount ? setAmountTotal(totalAmount) : setAmountTotal(0);
 
-             if (totalOrganizations && totalAmount && totalDonations) {
-                setProjectsTotal(totalDonations)
-                setOrganizaionsTotal(totalOrganizations);
-                setAmountTotal(totalAmount);
-            } else {
-                setProjectsTotal(0);
-                setOrganizaionsTotal(0);
-                setAmountTotal(0);
-            }
+            totalDonations  ? setProjectsTotal(totalDonations) : setProjectsTotal(0);
+            
+            totalOrganizations ? setOrganizaionsTotal(totalOrganizations) : setOrganizaionsTotal(0);
         }
         loadDataSta();
     },[])

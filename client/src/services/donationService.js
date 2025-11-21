@@ -21,3 +21,8 @@ export const getTotalDonationsByDonor = async (donorId) => {
   const response = await axios.get(`/donations/donor/${donorId}/project-count`);
   return response.data;
 };
+
+export const getTotalDonorsByProjectId = async (projectId) => {
+  const response = await axios.get(`/donations/project/${projectId}/donor-count`);
+  return response.data;
+};

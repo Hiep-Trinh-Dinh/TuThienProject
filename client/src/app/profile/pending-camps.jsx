@@ -101,7 +101,7 @@ function PendingCampSection(){
       useEffect(() => {
         projectService.getProjectsByUserId(userId)
           .then((data) => setProjects(data))
-          .catch((err) => {setError("System data loading error"); setSnackBarMessage("System data loading error")})
+          .catch((err) => {setError("System data loading error"); setSnackBarMessage("System data loading error"); setSnackBarErrorOpen(true)})
           .finally(() => setLoading(false));
       }, []);
     
@@ -127,6 +127,7 @@ function PendingCampSection(){
         } catch (e) {
           setError("Project data loading error");
           setSnackBarMessage("Project data loading error");
+          setSnackBarErrorOpen(true);
         } finally {
           setLoading(false);
         }
@@ -161,6 +162,7 @@ function PendingCampSection(){
         } catch (err) {
           setCreateError("Image uploading failed. Please try again.");
           setSnackBarMessage("Image uploading failed. Please try again.");
+        setSnackBarErrorOpen(true);
         } finally {
           setImageUploading(false);
         }
@@ -196,13 +198,13 @@ function PendingCampSection(){
     
           if (!payload.title) {
             setCreateError("Please fill in the project title.");
-            setSnackBarMessage("Please fill in the project title.");
+            setSnackBarMessage("Please fill in the project title.");setSnackBarErrorOpen(true);
             setCreating(false);
             return;
           }
           if (!payload.goalAmount || payload.goalAmount <= 0) {
             setCreateError("The goal amount must be greater than 0.");
-            setSnackBarMessage("The goal amount must be greater than 0.");
+            setSnackBarMessage("The goal amount must be greater than 0.");setSnackBarErrorOpen(true);
             setCreating(false);
             return;
           }
@@ -218,7 +220,7 @@ function PendingCampSection(){
           setShowCreateForm(false);
         } catch (err) {
           setCreateError("Creating project failed. Please try again.");
-          setSnackBarMessage("Creating project failed. Please try again.");
+          setSnackBarMessage("Creating project failed. Please try again.");setSnackBarErrorOpen(true);
         } finally {
           setCreating(false);
         }
@@ -230,7 +232,7 @@ function PendingCampSection(){
           const data = await projectService.getProjectById(projectId);
           setViewProject(data);
         } catch (e) {
-          setSnackBarMessage("Cannot load project detail.");
+          setSnackBarMessage("Cannot load project detail.");setSnackBarErrorOpen(true);
         }
       };
     
@@ -256,7 +258,7 @@ function PendingCampSection(){
           await projectService.updateProject(projectId, payload);
           await reloadProjects();
         } catch (e) {
-          setSnackBarMessage("Updating project status failed.");
+          setSnackBarMessage("Updating project status failed.");setSnackBarErrorOpen(true);
         }
       };
     
@@ -278,7 +280,7 @@ function PendingCampSection(){
             orgId: data.orgId, // giữ lại orgId đúng
           });
         } catch (e) {
-          setSnackBarMessage("Cannot load data to edit.");
+          setSnackBarMessage("Cannot load data to edit.");setSnackBarErrorOpen(true);
         }
       };
     
@@ -294,7 +296,7 @@ function PendingCampSection(){
         } catch (err) {
           console.error(err);
           setEditError("Loading image failed. Please try again.");
-          setSnackBarMessage("Loading image failed. Please try again.");
+          setSnackBarMessage("Loading image failed. Please try again.");setSnackBarErrorOpen(true);
         } finally {
           setEditImageUploading(false);
         }
@@ -322,7 +324,7 @@ function PendingCampSection(){
           if (!payload.title) {
 
             setEditError("Title cannot be empty.");
-            setSnackBarMessage("Title cannot be empty.");
+            setSnackBarMessage("Title cannot be empty.");setSnackBarErrorOpen(true);
             setEditSaving(false);
             return;
           }
@@ -331,7 +333,7 @@ function PendingCampSection(){
           await reloadProjects();
         } catch (e) {
           setEditError("Cập nhật thất bại. Vui lòng thử lại");
-          setSnackBarMessage("Updating failed. Please try again.");
+          setSnackBarMessage("Updating failed. Please try again.");setSnackBarErrorOpen(true);
         } finally {
           setEditSaving(false);
         }

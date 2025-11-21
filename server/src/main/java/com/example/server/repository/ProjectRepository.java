@@ -56,7 +56,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                                           Pageable pageable);
 
     @Query("SELECT DISTINCT p FROM Project p JOIN Donation d ON p.projectId = d.projectId " +
-            "WHERE (d.donorId = :userId)")
+            "WHERE (d.donorId = :userId) AND d.paymentStatus = 'success'")
     Page<Project> findPersonalProjects(@Param("userId") Long userId,
                                       Pageable pageable);
 
