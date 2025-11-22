@@ -63,5 +63,80 @@ class UserServiceTest {
         when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         assertDoesNotThrow(() -> userService.createUser(dto));
     }
-    // Có thể viết thêm test cho updateUserById, updateUserAvatar ...
+
+    @Test
+    void confirmToken_Success() {
+        User user = new User();
+        user.setStatus(User.Status.INACTIVE);
+        com.example.server.entity.ConfirmationToken token = com.example.server.entity.ConfirmationToken.builder()
+            .token("test-token")
+            .user(user)
+            .expiresAt(java.time.LocalDateTime.now().plusMinutes(15))
+            .build();
+        when(confirmationTokenRepository.findByToken("test-token")).thenReturn(Optional.of(token));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        assertDoesNotThrow(() -> userService.confirmToken("test-token"));
+    }
+
+    @Test
+    void confirmToken_TokenNotFound_ThrowsException() {
+        when(confirmationTokenRepository.findByToken("invalid")).thenReturn(Optional.empty());
+        AppException ex = assertThrows(AppException.class, () -> userService.confirmToken("invalid"));
+        assertEquals(ErrorCode.TOKEN_NOT_FOUND, ex.getErrorCode());
+    }
+
+    @Test
+    void confirmToken_AlreadyVerified_ThrowsException() {
+        User user = new User();
+        com.example.server.entity.ConfirmationToken token = com.example.server.entity.ConfirmationToken.builder()
+            .token("test-token")
+            .user(user)
+            .confirmedAt(java.time.LocalDateTime.now())
+            .expiresAt(java.time.LocalDateTime.now().plusMinutes(15))
+            .build();
+        when(confirmationTokenRepository.findByToken("test-token")).thenReturn(Optional.of(token));
+        assertThrows(IllegalStateException.class, () -> userService.confirmToken("test-token"));
+    }
+
+    @Test
+    void confirmToken_Expired_ThrowsException() {
+        User user = new User();
+        com.example.server.entity.ConfirmationToken token = com.example.server.entity.ConfirmationToken.builder()
+            .token("test-token")
+            .user(user)
+            .expiresAt(java.time.LocalDateTime.now().minusMinutes(1))
+            .build();
+        when(confirmationTokenRepository.findByToken("test-token")).thenReturn(Optional.of(token));
+        assertThrows(IllegalStateException.class, () -> userService.confirmToken("test-token"));
+    }
+
+    @Test
+    void updateUserById_UserNotFound_ThrowsException() {
+        com.example.server.dto.request.UpdateUserInfoRequestDTO dto = new com.example.server.dto.request.UpdateUserInfoRequestDTO();
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        AppException ex = assertThrows(AppException.class, () -> userService.updateUserById(999L, dto));
+        assertEquals(ErrorCode.USER_NOT_FOUND, ex.getErrorCode());
+    }
+
+    @Test
+    void updateUserById_InvalidPhone_ThrowsException() {
+        User user = new User();
+        com.example.server.dto.request.UpdateUserInfoRequestDTO dto = new com.example.server.dto.request.UpdateUserInfoRequestDTO();
+        dto.setPhone("123");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        AppException ex = assertThrows(AppException.class, () -> userService.updateUserById(1L, dto));
+        assertEquals(ErrorCode.PHONE_INVALID, ex.getErrorCode());
+    }
+
+    @Test
+    void updateUserById_ValidPhone_UpdatesUser() {
+        User user = new User();
+        com.example.server.dto.request.UpdateUserInfoRequestDTO dto = new com.example.server.dto.request.UpdateUserInfoRequestDTO();
+        dto.setPhone("0123456789");
+        dto.setFullName("New Name");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(new com.example.server.dto.response.UserResponse());
+        assertDoesNotThrow(() -> userService.updateUserById(1L, dto));
+    }
 }

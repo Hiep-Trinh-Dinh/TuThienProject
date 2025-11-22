@@ -30,6 +30,7 @@ public class ProjectDTO {
     // Computed fields for frontend
     private Integer daysLeft;
     private Double progressPercentage;
+    private Long donorCount; 
     
     public static ProjectDTO fromEntity(Project project) {
         ProjectDTO dto = new ProjectDTO();
