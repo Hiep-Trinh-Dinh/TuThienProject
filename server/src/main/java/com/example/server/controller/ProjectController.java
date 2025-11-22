@@ -27,14 +27,21 @@ public class ProjectController {
     private ProjectService projectService;
 
     @Autowired
+    private com.example.server.service.DonationService donationService;
+
+    @Autowired
     private FileStorageService fileStorageService;
     
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<Project> projects = projectService.getActiveProjects();
         List<ProjectDTO> projectDTOs = projects.stream()
-                .map(ProjectDTO::fromEntity)
-                .collect(Collectors.toList());
+            .map(project -> {
+                ProjectDTO dto = ProjectDTO.fromEntity(project);
+                dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
+                return dto;
+            })
+            .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
 
@@ -60,20 +67,26 @@ public class ProjectController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size,
-            @RequestParam(required = false, defaultValue = "0") Long userId)
-    {
+            @RequestParam(required = false, defaultValue = "0") Long userId) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.searchProjects(q, category, status, sortBy, pageable, userId);
-        Page<ProjectDTO> projectDTOs = projects.map(ProjectDTO::fromEntity);
+        Page<ProjectDTO> projectDTOs = projects.map(project -> {
+            ProjectDTO dto = ProjectDTO.fromEntity(project);
+            dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
+            return dto;
+        });
         return ResponseEntity.ok(projectDTOs);
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Long id) {
         Optional<Project> project = projectService.getProjectById(id);
-        return project.map(p -> ResponseEntity.ok(ProjectDTO.fromEntity(p)))
-                     .orElse(ResponseEntity.notFound().build());
+        return project.map(p -> {
+            ProjectDTO dto = ProjectDTO.fromEntity(p);
+            dto.setDonorCount(donationService.countDonorsByProject(p.getProjectId()));
+            return ResponseEntity.ok(dto);
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/account/{userId}")

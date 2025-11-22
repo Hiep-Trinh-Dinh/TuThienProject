@@ -11,7 +11,10 @@ import {getTotalDonorsByProjectId} from "../../services/donationService"
 export function ProjectHero({ project }) {
   const raised = Number(project.raisedAmount || 0)
   const goal = Number(project.goalAmount || 0)
-  const progressPercentage = project.progressPercentage || 0
+  // Tính toán progressPercentage từ raised và goal nếu backend không trả về
+  const progressPercentage = project.progressPercentage !== undefined 
+    ? project.progressPercentage 
+    : (goal > 0 ? Math.min(100, (raised / goal) * 100) : 0)
   const daysLeft = project.daysLeft
   const [donors,setDonors] = useState(0);
   const heroImage = resolveProjectImage(project.imageUrl || project.image)

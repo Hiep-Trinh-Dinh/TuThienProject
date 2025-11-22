@@ -57,17 +57,23 @@ public class DonationController {
             String OrderInfo = "Ung ho du an " + donation.getProjectId();
             System.out.println("[LOG] Đã tạo donation: id=" + donation.getDonationId());
             if ("momo".equalsIgnoreCase(dto.getPaymentMethod())) {
-                // Gọi service tạo payment
-                PaymentResponse momoRes = paymentService.createPayment(donation.getAmount().longValue(), OrderInfo);
+                // Gọi service tạo payment, truyền donationId vào extraData để IPN có thể cập nhật status
+                PaymentResponse momoRes = paymentService.createPayment(
+                    donation.getAmount().longValue(), 
+                    OrderInfo, 
+                    donation.getDonationId()
+                );
                 System.out.println("[LOG] Đã gọi Momo, nhận orderId=" + momoRes.getOrderId());
 
-//                // Option: Gắn donationId nếu cần trả lại FE
+                // Lưu orderId vào donation để có thể query lại khi redirect
+                donation.setOrderId(momoRes.getOrderId());
+                donationService.updateDonationOrderId(donation.getDonationId(), momoRes.getOrderId());
+                System.out.println("[LOG] Đã lưu orderId=" + momoRes.getOrderId() + " vào donation " + donation.getDonationId());
+
+                // Gắn donationId vào response để FE có thể sử dụng
                 momoRes.setDonationId(String.valueOf(donation.getDonationId()));
-//                // Lưu orderId vào donation để đối chiếu sau này (callback IPN)
-//                donation.setDonorId(momoRes.getOrderId());
-                System.out.println("[THÔNG BÁO] Đã lưu xong donation, đơn hàng Momo: ");
-////                donationService.save(donation);
-                System.out.println("[LOG] Luồng đã tới bước lưu vào DB");
+                System.out.println("[THÔNG BÁO] Đã lưu xong donation, đơn hàng Momo: orderId=" + momoRes.getOrderId());
+                System.out.println("[LOG] Luồng đã tới bước lưu vào DB, donationId=" + donation.getDonationId() + " đã được lưu vào extraData và orderId");
                 return ResponseEntity.ok(momoRes);
 
             }
@@ -92,6 +98,12 @@ public class DonationController {
         return ResponseEntity.ok(donationDTOs);
     }
 
+    @GetMapping("/allnoPaging")
+    public ResponseEntity<List<DonationDTO>> getAllDonationsNoPaging() {
+        List<Donation> donations = donationService.getAllDonations();
+        List<DonationDTO> result = donations.stream().map(DonationDTO::fromEntity).toList();
+        return ResponseEntity.ok(result);
+    }
 
 
     // Lấy donations theo project
@@ -149,6 +161,14 @@ public class DonationController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @PutMapping("/admin/donations/{id}/status")
+    public ResponseEntity<DonationDTO> updatePaymentStatusAlias(
+            @PathVariable Long id, 
+            @RequestParam String status) {
+        // Gọi lại logic cũ để tránh duplicate code
+        return updatePaymentStatus(id, status);
     }
 
     // Thống kê tổng donations của project

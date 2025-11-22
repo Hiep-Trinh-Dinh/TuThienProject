@@ -4,6 +4,7 @@ import com.example.server.config.momoConfig;
 import com.example.server.dto.momo.CreateMomoRequest;
 import com.example.server.dto.momo.CreateMomoResponse;
 import com.example.server.dto.response.PaymentResponse;
+import com.example.server.entity.Donation;
 import com.example.server.util.CryptoUtil;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -17,22 +18,28 @@ public class PaymentService {
 
     private final momoConfig momoConfig;
     private final RestTemplate restTemplate;
+    private final DonationService donationService;
 
-    public PaymentService(momoConfig momoConfig) {
+    public PaymentService(momoConfig momoConfig, DonationService donationService) {
         this.momoConfig = momoConfig;
         this.restTemplate = new RestTemplate();
+        this.donationService = donationService;
     }
 
     /**
      * Khởi tạo thanh toán MoMo và trả về thông tin cho FE.
      * DonationController chịu trách nhiệm tạo Donation trong DB,
      * hàm này chỉ lo gọi MoMo và trả payUrl, orderId,...
+     * @param amount Số tiền thanh toán
+     * @param orderInfo Thông tin đơn hàng
+     * @param donationId ID của donation để lưu vào extraData (có thể null)
      */
-    public PaymentResponse createPayment(long amount, String orderInfo) throws Exception {
+    public PaymentResponse createPayment(long amount, String orderInfo, Long donationId) throws Exception {
         String orderId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
         String requestType = "captureWallet";
-        String extraData = ""; // sau này có thể nhét donationId vào đây
+        // Lưu donationId vào extraData để sau này IPN có thể cập nhật status
+        String extraData = donationId != null ? String.valueOf(donationId) : "";
 
         // rawSignature đúng format theo tài liệu MoMo
         String rawSignature = String.format(
@@ -77,7 +84,7 @@ public class PaymentService {
         );
 
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("MoMo API error: HTTP " + response.getStatusCodeValue());
+            throw new RuntimeException("MoMo API error: HTTP " + response.getStatusCode().value());
         }
 
         CreateMomoResponse momoRes = response.getBody();
@@ -160,17 +167,30 @@ public class PaymentService {
                     ", resultCode=" + resultCode +
                     ", extraData=" + extraData);
 
-            // TODO: Sau này khi bạn truyền donationId vào extraData,
-            // có thể update trạng thái donation như sau (ví dụ):
-            //
-            // if (extraData != null && !extraData.isBlank()) {
-            //     Long donationId = Long.parseLong(extraData);
-            //     Donation.PaymentStatus status =
-            //             (resultCode == 0)
-            //                     ? Donation.PaymentStatus.success
-            //                     : Donation.PaymentStatus.failed;
-            //     donationService.updatePaymentStatus(donationId, status);
-            // }
+            // Cập nhật trạng thái donation dựa trên donationId trong extraData
+            if (extraData != null && !extraData.isBlank()) {
+                try {
+                    Long donationId = Long.parseLong(extraData);
+                    Donation.PaymentStatus status =
+                            (resultCode == 0)
+                                    ? Donation.PaymentStatus.success
+                                    : Donation.PaymentStatus.failed;
+                    
+                    Donation updatedDonation = donationService.updatePaymentStatus(donationId, status);
+                    if (updatedDonation != null) {
+                        System.out.println("[IPN] Đã cập nhật donation " + donationId + " sang status: " + status);
+                    } else {
+                        System.out.println("[IPN] Không tìm thấy donation với ID: " + donationId);
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("[IPN] extraData không phải là số hợp lệ: " + extraData);
+                } catch (Exception e) {
+                    System.out.println("[IPN] Lỗi khi cập nhật donation status: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("[IPN] extraData rỗng, không thể cập nhật donation status");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

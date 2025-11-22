@@ -110,14 +110,11 @@ function EditProfileSection(){
 
             // Upload to server
             const formData = new FormData();
+            formData.append('file', file);
             formData.append('image', file);
             formData.append('type', 'avatar');
 
-            const response = await api.post('/accounts/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/accounts/upload', formData);
 
             // Update form with new avatar URL
             const avatarUrl = response.data.url;
@@ -126,8 +123,8 @@ function EditProfileSection(){
             setSnackSuccessBarOpen(true);
 
         } catch (error) {
-            console.error("Error uploading avatar:", error);
-            setSnackBarMessage("Failed to upload avatar. Please try again.");
+            console.error("Error uploading avatar:", error, error?.response?.data);
+            setSnackBarMessage("Failed to upload avatar. " + (error?.response?.data?.error || 'Please try again.'));
             setSnackBarErrorOpen(true);
             // Revert preview on error
             setAvatarPreview(form.avatarUrl);
@@ -163,14 +160,11 @@ function EditProfileSection(){
 
             // Upload to server
             const formData = new FormData();
+            formData.append('file', file);
             formData.append('image', file);
             formData.append('type', 'cover');
 
-            const response = await api.post('/accounts/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/accounts/upload', formData);
             
             // Update form with new cover URL
             const coverUrl = response.data.url;
@@ -179,8 +173,8 @@ function EditProfileSection(){
             setSnackSuccessBarOpen(true);
 
         } catch (error) {
-            console.error("Error uploading cover:", error);
-            setSnackBarMessage("Failed to upload cover photo. Please try again.");
+            console.error("Error uploading cover:", error, error?.response?.data);
+            setSnackBarMessage("Failed to upload cover photo. " + (error?.response?.data?.error || 'Please try again.'));
             setSnackBarErrorOpen(true);
             // Revert preview on error
             setCoverPreview(form.coverPhotoUrl);

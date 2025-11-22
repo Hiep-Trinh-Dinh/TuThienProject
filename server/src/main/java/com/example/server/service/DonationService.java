@@ -17,6 +17,7 @@ import java.util.Optional;
 import com.example.server.service.NotificationProducer;
 import com.example.server.dto.request.MailBodyRequest;
 import com.example.server.repository.UserRepository;
+import com.example.server.service.EmailService;
 
 @Service
 @Transactional
@@ -34,41 +35,59 @@ public class DonationService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     // Tạo donation mới
     public Donation createDonation(Donation donation) {
         donation.setDonatedAt(LocalDateTime.now());
-        donation.setPaymentStatus(Donation.PaymentStatus.pending);
-        return donationRepository.save(donation);
+        donation.setPaymentStatus(Donation.PaymentStatus.success);
+        Donation savedDonation = donationRepository.save(donation);
+        
+        // Cập nhật raised amount của project ngay sau khi tạo donation thành công
+        updateProjectRaisedAmount(savedDonation.getProjectId());
+        System.out.println("[CREATE_DONATION] Đã cập nhật raisedAmount cho project " + savedDonation.getProjectId());
+        
+        // BEGIN: Gửi email cảm ơn cho user
+        Optional<com.example.server.entity.User> userOpt = userRepository.findById(savedDonation.getDonorId());
+        if (userOpt.isPresent()) {
+            String toEmail = userOpt.get().getEmail();
+            String name = userOpt.get().getFullName();
+            String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
+            String body = "Xin chào " + name + ",\n\nCảm ơn bạn đã quyên góp số tiền " + savedDonation.getAmount() + " cho dự án (ID: " + savedDonation.getProjectId() + "). Chúng tôi trân trọng sự đóng góp của bạn.\n\nTrân trọng,\nBan quản trị";
+            emailService.sendSimpleMessage(
+              MailBodyRequest.builder()
+                .to(toEmail)
+                .subject(subject)
+                .text(body)
+                .build()
+            );
+        }
+        // END: Gửi email cảm ơn
+        
+        return savedDonation;
     }
 
     // Cập nhật payment status
     public Donation updatePaymentStatus(Long donationId, Donation.PaymentStatus status) {
+        System.out.println("[PAYMENT_STATUS] REQUEST update donationId=" + donationId + " => status: " + status);
         Optional<Donation> donationOpt = donationRepository.findById(donationId);
         if (donationOpt.isPresent()) {
             Donation donation = donationOpt.get();
+            System.out.println("[PAYMENT_STATUS] BEFORE: donationId=" + donation.getDonationId() + ", status: " + donation.getPaymentStatus());
             donation.setPaymentStatus(status);
-
+            Donation result = donationRepository.save(donation);
+            System.out.println("[PAYMENT_STATUS] AFTER: donationId=" + result.getDonationId() + ", status: " + result.getPaymentStatus());
+            
             // Nếu payment thành công, cập nhật raised amount của project
             if (status == Donation.PaymentStatus.success) {
                 updateProjectRaisedAmount(donation.getProjectId());
-
-                // ---- Notify donation thành công qua queue ----
-                // Lấy email donor
-                if (donation.getDonorId() != null) {
-                    userRepository.findById(donation.getDonorId()).ifPresent(user -> {
-                        String subject = "Cảm ơn bạn đã ủng hộ dự án!";
-                        String text = "Bạn đã ủng hộ thành công cho dự án (ID: " + donation.getProjectId() + ") số tiền: " + donation.getAmount() + ". Cảm ơn bạn rất nhiều!";
-                        com.example.server.dto.request.MailBodyRequest mailBody = com.example.server.dto.request.MailBodyRequest.builder()
-                            .to(user.getEmail())
-                            .subject(subject)
-                            .text(text)
-                            .build();
-                        notificationProducer.sendNotify(mailBody);
-                    });
-                }
+                System.out.println("[PAYMENT_STATUS] Đã cập nhật raisedAmount cho project " + donation.getProjectId());
             }
-
-            return donationRepository.save(donation);
+            
+            return result;
+        } else {
+            System.out.println("[PAYMENT_STATUS] NOT FOUND donationId=" + donationId);
         }
         return null;
     }
@@ -148,5 +167,20 @@ public class DonationService {
     // Xóa donation
     public void deleteDonation(Long id) {
         donationRepository.deleteById(id);
+    }
+
+    // Cập nhật orderId cho donation
+    public void updateDonationOrderId(Long donationId, String orderId) {
+        Optional<Donation> donationOpt = donationRepository.findById(donationId);
+        if (donationOpt.isPresent()) {
+            Donation donation = donationOpt.get();
+            donation.setOrderId(orderId);
+            donationRepository.save(donation);
+        }
+    }
+
+    // Lấy donation theo orderId
+    public Donation getDonationByOrderId(String orderId) {
+        return donationRepository.findByOrderId(orderId);
     }
 }
