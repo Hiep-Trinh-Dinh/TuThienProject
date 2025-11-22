@@ -138,4 +138,105 @@ class DonationServiceTest {
         donationService.updateDonationOrderId(1L, "ORDER123");
         verify(donationsRepository, times(1)).save(any(Donation.class));
     }
+
+    @Test
+    void updateDonationOrderId_donationNotFound_doesNothing() {
+        when(donationsRepository.findById(999L)).thenReturn(Optional.empty());
+        donationService.updateDonationOrderId(999L, "ORDER123");
+        verify(donationsRepository, never()).save(any(Donation.class));
+    }
+
+    @Test
+    void getDonationsByProject_withPagination() {
+        Page<Donation> mockPage = new PageImpl<>(Collections.singletonList(new Donation()));
+        when(donationsRepository.findByProjectId(anyLong(), any(Pageable.class))).thenReturn(mockPage);
+        Page<Donation> page = donationService.getDonationsByProject(5L, PageRequest.of(0, 10));
+        assertEquals(1, page.getTotalElements());
+    }
+
+    @Test
+    void getDonationsByDonor_withPagination() {
+        Page<Donation> mockPage = new PageImpl<>(Collections.singletonList(new Donation()));
+        when(donationsRepository.findByDonorId(anyLong(), any(Pageable.class))).thenReturn(mockPage);
+        Page<Donation> page = donationService.getDonationsByDonor(11L, PageRequest.of(0, 10));
+        assertEquals(1, page.getTotalElements());
+    }
+
+    @Test
+    void getDonationById_found() {
+        Donation donation = new Donation();
+        when(donationsRepository.findById(1L)).thenReturn(Optional.of(donation));
+        Optional<Donation> result = donationService.getDonationById(1L);
+        assertTrue(result.isPresent());
+    }
+
+    @Test
+    void getDonationById_notFound() {
+        when(donationsRepository.findById(999L)).thenReturn(Optional.empty());
+        Optional<Donation> result = donationService.getDonationById(999L);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void getTotalDonationsByProject_returnsTotal() {
+        when(donationsRepository.calculateTotalDonationsByProject(anyLong())).thenReturn(BigDecimal.valueOf(50000));
+        BigDecimal total = donationService.getTotalDonationsByProject(1L);
+        assertEquals(BigDecimal.valueOf(50000), total);
+    }
+
+    @Test
+    void getTotalDonationsByDonor_returnsTotal() {
+        when(donationsRepository.calculateTotalDonationsByDonor(anyLong())).thenReturn(BigDecimal.valueOf(30000));
+        BigDecimal total = donationService.getTotalDonationsByDonor(1L);
+        assertEquals(BigDecimal.valueOf(30000), total);
+    }
+
+    @Test
+    void countDonorsByProject_returnsCount() {
+        when(donationsRepository.countUniqueDonorsByProject(anyLong())).thenReturn(10L);
+        Long count = donationService.countDonorsByProject(1L);
+        assertEquals(10L, count);
+    }
+
+    @Test
+    void countProjectsByDonor_returnsCount() {
+        when(donationsRepository.countUniqueProjectsByDonor(anyLong())).thenReturn(5L);
+        Long count = donationService.countProjectsByDonor(1L);
+        assertEquals(5L, count);
+    }
+
+    @Test
+    void getRecentDonations_returnsPage() {
+        Page<Donation> mockPage = new PageImpl<>(Collections.singletonList(new Donation()));
+        when(donationsRepository.findRecentSuccessfulDonations(any(Pageable.class))).thenReturn(mockPage);
+        Page<Donation> page = donationService.getRecentDonations(PageRequest.of(0, 10));
+        assertEquals(1, page.getTotalElements());
+    }
+
+    @Test
+    void getDonationByOrderId_returnsDonation() {
+        Donation donation = new Donation();
+        when(donationsRepository.findByOrderId("ORDER123")).thenReturn(donation);
+        Donation result = donationService.getDonationByOrderId("ORDER123");
+        assertNotNull(result);
+    }
+
+    @Test
+    void updatePaymentStatus_donationNotFound_returnsNull() {
+        when(donationsRepository.findById(999L)).thenReturn(Optional.empty());
+        Donation result = donationService.updatePaymentStatus(999L, Donation.PaymentStatus.success);
+        assertNull(result);
+    }
+
+    @Test
+    void updatePaymentStatus_notSuccess_doesNotUpdateProject() {
+        Donation donation = new Donation();
+        donation.setDonationId(1L);
+        donation.setProjectId(2L);
+        donation.setPaymentStatus(Donation.PaymentStatus.pending);
+        when(donationsRepository.findById(1L)).thenReturn(Optional.of(donation));
+        when(donationsRepository.save(any(Donation.class))).thenReturn(donation);
+        Donation result = donationService.updatePaymentStatus(1L, Donation.PaymentStatus.failed);
+        assertEquals(Donation.PaymentStatus.failed, result.getPaymentStatus());
+    }
 }
