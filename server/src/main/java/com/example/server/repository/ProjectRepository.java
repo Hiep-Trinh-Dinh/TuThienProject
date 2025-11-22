@@ -13,7 +13,9 @@ import java.util.List;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    
+
+    List<Project> findAllByOrderByStatusAsc();
+
     List<Project> findByStatus(Project.Status status);
 
     @Query("SELECT p FROM Project p WHERE p.status = 'active' AND p.orgId = :orgId")

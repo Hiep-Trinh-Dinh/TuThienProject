@@ -22,12 +22,15 @@ public class ProjectService {
     public List<Project> getAllProjects() {
         return projectRepository.findAll();
     }
+
+    public List<Project> getAllByOrderByStatusAsc() {
+        return projectRepository.findAllByOrderByStatusAsc();
+    }
     
     public List<Project> getActiveProjects() {
         return projectRepository.findByStatus(Project.Status.active);
     }
-    
-    
+
     public List<Project> getProjectsByCategory(Project.Category category) {
         return projectRepository.findByCategory(category);
     }

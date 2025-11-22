@@ -45,6 +45,19 @@ public class ProjectController {
         return ResponseEntity.ok(projectDTOs);
     }
 
+    @GetMapping("/full")
+    public ResponseEntity<List<ProjectDTO>> getAllByOrderByStatusAsc() {
+        List<Project> projects = projectService.getAllByOrderByStatusAsc();
+        List<ProjectDTO> projectDTOs = projects.stream()
+                .map(project -> {
+                    ProjectDTO dto = ProjectDTO.fromEntity(project);
+                    dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(projectDTOs);
+    }
+
     @GetMapping("/donated")
     public ResponseEntity<Page<ProjectDTO>> getDonatedProjects(
             @RequestParam(defaultValue = "0") int page,

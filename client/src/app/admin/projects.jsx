@@ -42,7 +42,7 @@ export default function AdminProjectList() {
   const currentData = projects.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
 
   useEffect(() => {
-    projectService.getAllProjects()
+    projectService.getAllTypeProjects()
       .then((data) => setProjects(data))
       .catch((err) => setError("Lỗi tải dữ liệu dự án"))
       .finally(() => setLoading(false));
@@ -64,7 +64,7 @@ export default function AdminProjectList() {
   const reloadProjects = async () => {
     setLoading(true);
     try {
-      const data = await projectService.getAllProjects();
+      const data = await projectService.getAllTypeProjects();
       setProjects(data);
     } catch (e) {
       setError("Lỗi tải dữ liệu dự án");
@@ -148,7 +148,7 @@ export default function AdminProjectList() {
       await projectService.createProject(payload);
       // Refresh list
       setLoading(true);
-      const data = await projectService.getAllProjects();
+      const data = await projectService.getAllTypeProjects();
       setProjects(data);
       setLoading(false);
       // Reset form
@@ -270,6 +270,13 @@ export default function AdminProjectList() {
     }
   };
 
+  function formatCurrency(amount, currency = "VND", locale = "vi-VN") {
+      return new Intl.NumberFormat(locale, {
+          style: "currency",
+          currency: currency,
+      }).format(amount);
+  }
+  
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Quản lý Dự án</h2>
@@ -445,8 +452,8 @@ export default function AdminProjectList() {
               <div><b>Ảnh:</b> {viewProject.imageUrl ? <a href={viewProject.imageUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">Xem ảnh</a> : '—'}</div>
               <div><b>Danh mục:</b> {viewProject.category}</div>
               <div><b>Trạng thái:</b> {viewProject.status}</div>
-              <div><b>Mục tiêu:</b> {viewProject.goalAmount}</div>
-              <div><b>Đã gây quỹ:</b> {viewProject.raisedAmount}</div>
+              <div><b>Mục tiêu:</b> {formatCurrency(viewProject.goalAmount)}</div>
+              <div><b>Đã gây quỹ:</b> {formatCurrency(viewProject.raisedAmount)}</div>
               <div><b>Bắt đầu:</b> {viewProject.startDate || '—'}</div>
               <div><b>Kết thúc:</b> {viewProject.endDate || '—'}</div>
               <div><b>Tạo lúc:</b> {viewProject.createdAt || '—'}</div>

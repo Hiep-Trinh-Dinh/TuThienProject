@@ -15,6 +15,20 @@ class ProjectService {
     }
   }
 
+  // Lấy tất cả dạng dự án
+  async getAllTypeProjects() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/full`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      throw error;
+    }
+  }
+
   // Lấy dự án theo ID
   async getProjectById(id) {
     try {
