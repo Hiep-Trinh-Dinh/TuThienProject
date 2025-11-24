@@ -32,7 +32,7 @@ export default function PaymentCallback() {
 
           // Gọi API backend để verify và update payment status
           try {
-            const response = await axios.post("/api/payment/verify", {
+            const response = await axios.post("/payment/verify", {
               orderId,
               extraData,
               resultCode,

@@ -40,32 +40,34 @@ public class DonationService {
 
     // Tạo donation mới
     public Donation createDonation(Donation donation) {
+        System.out.println("[CREATE_DONATION] Tạo do Donation của test ");
+
         donation.setDonatedAt(LocalDateTime.now());
-        donation.setPaymentStatus(Donation.PaymentStatus.success);
-        Donation savedDonation = donationRepository.save(donation);
-        
+        donation.setPaymentStatus(Donation.PaymentStatus.pending);
+        //Donation savedDonation = donationRepository.save(donation);
+
         // Cập nhật raised amount của project ngay sau khi tạo donation thành công
-        updateProjectRaisedAmount(savedDonation.getProjectId());
-        System.out.println("[CREATE_DONATION] Đã cập nhật raisedAmount cho project " + savedDonation.getProjectId());
-        
+//        updateProjectRaisedAmount(savedDonation.getProjectId());
+//        System.out.println("[CREATE_DONATION] Đã cập nhật raisedAmount cho project " + savedDonation.getProjectId());
+
         // BEGIN: Gửi email cảm ơn cho user
-        Optional<com.example.server.entity.User> userOpt = userRepository.findById(savedDonation.getDonorId());
-        if (userOpt.isPresent()) {
-            String toEmail = userOpt.get().getEmail();
-            String name = userOpt.get().getFullName();
-            String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
-            String body = "Xin chào " + name + ",\n\nCảm ơn bạn đã quyên góp số tiền " + savedDonation.getAmount() + " cho dự án (ID: " + savedDonation.getProjectId() + "). Chúng tôi trân trọng sự đóng góp của bạn.\n\nTrân trọng,\nBan quản trị";
-            emailService.sendSimpleMessage(
-              MailBodyRequest.builder()
-                .to(toEmail)
-                .subject(subject)
-                .text(body)
-                .build()
-            );
-        }
+//        Optional<com.example.server.entity.User> userOpt = userRepository.findById(savedDonation.getDonorId());
+//        if (userOpt.isPresent()) {
+//            String toEmail = userOpt.get().getEmail();
+//            String name = userOpt.get().getFullName();
+//            String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
+//            String body = "Xin chào " + name + ",\n\nCảm ơn bạn đã quyên góp số tiền " + savedDonation.getAmount() + " cho dự án (ID: " + savedDonation.getProjectId() + "). Chúng tôi trân trọng sự đóng góp của bạn.\n\nTrân trọng,\nBan quản trị";
+//            emailService.sendSimpleMessage(
+//              MailBodyRequest.builder()
+//                .to(toEmail)
+//                .subject(subject)
+//                .text(body)
+//                .build()
+//            );
+//        }
         // END: Gửi email cảm ơn
-        
-        return savedDonation;
+
+        return donationRepository.save(donation);
     }
 
     // Cập nhật payment status
@@ -78,13 +80,31 @@ public class DonationService {
             donation.setPaymentStatus(status);
             Donation result = donationRepository.save(donation);
             System.out.println("[PAYMENT_STATUS] AFTER: donationId=" + result.getDonationId() + ", status: " + result.getPaymentStatus());
-            
+
             // Nếu payment thành công, cập nhật raised amount của project
             if (status == Donation.PaymentStatus.success) {
                 updateProjectRaisedAmount(donation.getProjectId());
                 System.out.println("[PAYMENT_STATUS] Đã cập nhật raisedAmount cho project " + donation.getProjectId());
+
+                userRepository.findById(donation.getDonorId()).ifPresent(user -> {
+                    String toEmail = user.getEmail();
+                    String name = user.getFullName();
+String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
+                    String body = "Xin chào " + name + ",\n\n" +
+                            "Cảm ơn bạn đã quyên góp số tiền " + donation.getAmount() +
+                            " cho dự án (ID: " + donation.getProjectId() + "). " +
+                            "Chúng tôi trân trọng sự đóng góp của bạn.\n\n" +
+                            "Trân trọng,\nBan quản trị";
+                    emailService.sendSimpleMessage(
+                            MailBodyRequest.builder()
+                                    .to(toEmail)
+                                    .subject(subject)
+                                    .text(body)
+                                    .build()
+                    );
+                });
             }
-            
+
             return result;
         } else {
             System.out.println("[PAYMENT_STATUS] NOT FOUND donationId=" + donationId);

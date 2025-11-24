@@ -52,6 +52,8 @@ public class DonationController {
     @PostMapping
     public ResponseEntity<PaymentResponse> createDonation(@RequestBody DonationDTO dto) {
         try {
+            System.out.println("[CREATE_DONATION] Tạo donation đúng ");
+
             System.out.println("[LOG] Nhận request tạo donation.");
             Donation donation = donationService.createDonation(dto.toEntity());
             String OrderInfo = "Ung ho du an " + donation.getProjectId();

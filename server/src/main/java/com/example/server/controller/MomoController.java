@@ -7,6 +7,7 @@ import com.example.server.service.PaymentService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 
 import java.io.IOException;
 import java.net.URI;
@@ -192,74 +193,38 @@ public class MomoController {
      */
     @PostMapping("/verify")
     public ResponseEntity<Map<String, Object>> verifyPayment(@RequestBody Map<String, String> params) {
-        System.out.println("[PAYMENT_VERIFY] Nhận request verify từ frontend: " + params);
-        
-        try {
-            String resultCode = params.get("resultCode");
-            String orderId = params.get("orderId");
-            String extraData = params.get("extraData");
-            String orderInfo = params.get("orderInfo");
-            
-            Long projectId = null;
-            Long donationId = null;
-            
-            // Parse donationId từ extraData
-            if (extraData != null && !extraData.isBlank()) {
-                try {
-                    donationId = Long.parseLong(extraData);
-                    System.out.println("[PAYMENT_VERIFY] Lấy donationId từ extraData: " + donationId);
-                } catch (NumberFormatException e) {
-                    System.out.println("[PAYMENT_VERIFY] extraData không phải số hợp lệ: " + extraData);
+        String resultCode = params.get("resultCode");
+        String extraData  = params.get("extraData"); // donationId
+        Long donationId   = Long.valueOf(extraData);
+
+        // Lấy donation hiện tại (để tránh override success nếu đã success)
+        Donation donation = donationService.getDonationById(donationId).orElse(null);
+
+        if (donation != null) {
+            if ("0".equals(resultCode)) {
+                // ✅ Thanh toán thành công
+                // chỉ update nếu chưa success, tránh IPN/verify bị gọi 2 lần
+                if (donation.getPaymentStatus() != Donation.PaymentStatus.success) {
+                    donationService.updatePaymentStatus(donationId, Donation.PaymentStatus.success);
                 }
+            } else {
+                // ❌ Thanh toán thất bại / bị hủy
+                // chỉ set failed nếu chưa success            
+                donationService.updatePaymentStatus(donationId, Donation.PaymentStatus.failed);
             }
-            
-            // Nếu không có trong extraData, query donation theo orderId
-            if (donationId == null && orderId != null && !orderId.isBlank()) {
-                try {
-                    Donation donation = donationService.getDonationByOrderId(orderId);
-                    if (donation != null) {
-                        donationId = donation.getDonationId();
-                        projectId = donation.getProjectId();
-                        System.out.println("[PAYMENT_VERIFY] Lấy donationId từ orderId: " + donationId + ", projectId: " + projectId);
-                    }
-                } catch (Exception e) {
-                    System.out.println("[PAYMENT_VERIFY] Lỗi khi query donation: " + e.getMessage());
-                }
-            }
-            
-            // Cập nhật payment_status nếu thanh toán thành công
-            if (donationId != null && "0".equals(resultCode)) {
-                try {
-                    Donation updatedDonation = donationService.updatePaymentStatus(donationId, Donation.PaymentStatus.success);
-                    if (updatedDonation != null) {
-                        projectId = updatedDonation.getProjectId();
-                        System.out.println("[PAYMENT_VERIFY] Đã cập nhật donation " + donationId + " sang status: success");
-                    }
-                } catch (Exception e) {
-                    System.out.println("[PAYMENT_VERIFY] Lỗi khi cập nhật donation status: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            
-            // Nếu vẫn chưa có projectId, parse từ orderInfo
-            if (projectId == null) {
-                projectId = extractProjectIdFromOrderInfo(orderInfo);
-            }
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "projectId", projectId != null ? projectId : 0,
-                "donationId", donationId != null ? donationId : 0
-            ));
-            
-        } catch (Exception e) {
-            System.out.println("[PAYMENT_VERIFY] Lỗi: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.ok(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
         }
+
+        Long projectId = null;
+        if (donation != null) {
+            projectId = donation.getProjectId();
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("donationId", donationId);
+        body.put("success", "0".equals(resultCode));
+        body.put("projectId", projectId);
+
+        return ResponseEntity.ok(body);
     }
 
     /**
