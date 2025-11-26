@@ -19,6 +19,19 @@ services:
       timeout: 20s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_server
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   server:
     build:
       context: ./server
@@ -35,6 +48,12 @@ services:
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       SPRING_JPA_HIBERNATE_DDL-AUTO: update
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+
+      # RabbitMQ inside Docker → connect qua hostname "rabbitmq"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       mysql:
        condition: service_healthy
@@ -53,4 +72,5 @@ services:
 
 volumes:
   mysql_data:
+  rabbitmq_data:
 
