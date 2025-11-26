@@ -39,8 +39,7 @@ function PendingCampSection(){
         }
     
     // Load thong ke.
-    useEffect(() => {
-        const loadDataSta = async () => {
+    const loadDataSta = async () => {
 
             const projectStats = await projectService.getProjectStats(userId);
             
@@ -56,6 +55,7 @@ function PendingCampSection(){
                 setAmountTotal(0);
             }
         }
+    useEffect(() => {
         loadDataSta();
     },[])
 
@@ -214,6 +214,7 @@ function PendingCampSection(){
           setLoading(true);
           const data = await projectService.getProjectsByUserId(userId);
           setProjects(data);
+          await loadDataSta();
           setLoading(false);
           // Reset form
           setForm({ title: "", description: "", imageUrl: "", category: "tre_em", goalAmount: "", startDate: "", endDate: "" });
@@ -257,6 +258,7 @@ function PendingCampSection(){
           };
           await projectService.updateProject(projectId, payload);
           await reloadProjects();
+          await loadDataSta();
         } catch (e) {
           setSnackBarMessage("Updating project status failed.");setSnackBarErrorOpen(true);
         }
@@ -331,6 +333,7 @@ function PendingCampSection(){
           await projectService.updateProject(editProject.projectId, payload);
           setEditProject(null);
           await reloadProjects();
+          await loadDataSta();
         } catch (e) {
           setEditError("Cập nhật thất bại. Vui lòng thử lại");
           setSnackBarMessage("Updating failed. Please try again.");setSnackBarErrorOpen(true);
@@ -538,11 +541,11 @@ function PendingCampSection(){
                                 onChange={handleChange} 
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white"
                                 >
-                                <option value="children">Children</option>
-                                <option value="healthcare">Healthcare</option>
-                                <option value="environment">Environment</option>
-                                <option value="disaster">Disaster Relief</option>
-                                <option value="other">Other</option>
+                                <option value="tre_em">Children</option>
+                                <option value="y_te">Healthcare</option>
+                                <option value="moi_truong">Environment</option>
+                                <option value="thien_tai">Disaster Relief</option>
+                                <option value="khac">Other</option>
                                 </select>
                             </div>
                             
@@ -1137,11 +1140,11 @@ function PendingCampSection(){
                             onChange={handleChange} 
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white"
                             >
-                            <option value="children">Children</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="environment">Environment</option>
-                            <option value="disaster">Disaster Relief</option>
-                            <option value="other">Other</option>
+                            <option value="tre_em">Children</option>
+                            <option value="y_te">Healthcare</option>
+                            <option value="moi_truong">Environment</option>
+                            <option value="thien_tai">Disaster Relief</option>
+                            <option value="khac">Other</option>
                             </select>
                         </div>
                         
