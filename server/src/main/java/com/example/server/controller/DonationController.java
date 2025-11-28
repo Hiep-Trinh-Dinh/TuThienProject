@@ -1,6 +1,7 @@
 package com.example.server.controller;
 
 import com.example.server.dto.DonationDTO;
+import com.example.server.dto.response.GlobalStatsResponse;
 import com.example.server.dto.response.PaymentResponse;
 import com.example.server.entity.Donation;
 import com.example.server.service.DonationReportService;
@@ -199,6 +200,11 @@ public class DonationController {
     public ResponseEntity<BigDecimal> getTotalDonationsByDonor(@PathVariable Long donorId) {
         BigDecimal total = donationService.getTotalDonationsByDonor(donorId);
         return ResponseEntity.ok(total);
+    }
+
+    @GetMapping("/stats/global")
+    public ResponseEntity<GlobalStatsResponse> getGlobalStats() {
+        return ResponseEntity.ok(donationService.getGlobalStats());
     }
 
     // Xóa donation

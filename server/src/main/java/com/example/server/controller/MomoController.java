@@ -210,7 +210,9 @@ public class MomoController {
             } else {
                 // ❌ Thanh toán thất bại / bị hủy
                 // chỉ set failed nếu chưa success            
+                if(donation.getPaymentStatus()==Donation.PaymentStatus.pending){
                 donationService.updatePaymentStatus(donationId, Donation.PaymentStatus.failed);
+                }
             }
         }
 

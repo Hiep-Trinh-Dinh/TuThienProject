@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.dto.response.GlobalStatsResponse;
 import com.example.server.entity.Donation;
 import com.example.server.entity.Project;
 import com.example.server.repository.DonationsRepository;
@@ -43,7 +44,7 @@ public class DonationService {
         System.out.println("[CREATE_DONATION] Tạo do Donation của test ");
 
         donation.setDonatedAt(LocalDateTime.now());
-        donation.setPaymentStatus(Donation.PaymentStatus.pending);
+        donation.setPaymentStatus(Donation.PaymentStatus.failed);
         //Donation savedDonation = donationRepository.save(donation);
 
         // Cập nhật raised amount của project ngay sau khi tạo donation thành công
@@ -167,6 +168,15 @@ String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
     // Tính tổng donations của một donor
     public BigDecimal getTotalDonationsByDonor(Long donorId) {
         return donationRepository.calculateTotalDonationsByDonor(donorId);
+    }
+
+    public GlobalStatsResponse getGlobalStats() {
+        BigDecimal totalRaised = donationRepository.calculateTotalDonations();
+        Long totalDonors = donationRepository.countTotalDonors();
+        return new GlobalStatsResponse(
+                totalDonors != null ? totalDonors : 0L,
+                totalRaised != null ? totalRaised : BigDecimal.ZERO
+        );
     }
 
     // Đếm số donor của một project

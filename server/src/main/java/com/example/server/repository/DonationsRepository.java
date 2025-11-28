@@ -39,6 +39,12 @@ public interface DonationsRepository extends JpaRepository<Donation, Long> {
     @Query("SELECT COALESCE(SUM(d.amount), 0) FROM Donation d WHERE d.donorId = :donorId AND d.paymentStatus = 'success'")
     BigDecimal calculateTotalDonationsByDonor(@Param("donorId") Long donorId);
 
+    @Query("SELECT COALESCE(SUM(d.amount), 0) FROM Donation d WHERE d.paymentStatus = 'success'")
+    BigDecimal calculateTotalDonations();
+
+    @Query("SELECT COUNT(DISTINCT d.donorId) FROM Donation d WHERE d.paymentStatus = 'success'")
+    Long countTotalDonors();
+
     // Đếm số người donor unique cho một project
     @Query("SELECT COUNT(DISTINCT d.donorId) FROM Donation d WHERE d.projectId = :projectId AND d.paymentStatus = 'success'")
     Long countUniqueDonorsByProject(@Param("projectId") Long projectId);

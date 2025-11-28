@@ -53,7 +53,7 @@ class DonationServiceTest {
         donation.setProjectId(2L);
         donation.setDonorId(100L);
         donation.setAmount(BigDecimal.valueOf(100000));
-        donation.setPaymentStatus(Donation.PaymentStatus.success);
+        donation.setPaymentStatus(Donation.PaymentStatus.failed); // trạng thái mặc định
         donation.setDonatedAt(LocalDateTime.now());
 
         User user = new User();
@@ -63,8 +63,16 @@ class DonationServiceTest {
 
         when(donationsRepository.save(any(Donation.class))).thenReturn(donation);
         when(userRepository.findById(100L)).thenReturn(Optional.of(user));
+        when(donationsRepository.findById(1L)).thenReturn(Optional.of(donation));
 
+        // Gọi create, KHÔNG gửi email ngay
         donationService.createDonation(donation);
+        verify(emailService, never()).sendSimpleMessage(any(MailBodyRequest.class));
+
+        // Khi update status thành success, mới gửi email
+        donation.setPaymentStatus(Donation.PaymentStatus.success);
+        when(donationsRepository.save(any(Donation.class))).thenReturn(donation);
+        donationService.updatePaymentStatus(1L, Donation.PaymentStatus.success);
         verify(emailService, times(1)).sendSimpleMessage(any(MailBodyRequest.class));
     }
 
@@ -72,6 +80,7 @@ class DonationServiceTest {
     void createDonation_noEmailIfUserNotFound() {
         Donation donation = new Donation();
         donation.setDonorId(404L);
+        donation.setPaymentStatus(Donation.PaymentStatus.pending);
         when(donationsRepository.save(any(Donation.class))).thenReturn(donation);
         when(userRepository.findById(404L)).thenReturn(Optional.empty());
         donationService.createDonation(donation);
@@ -94,7 +103,9 @@ class DonationServiceTest {
     @Test
     void getAllDonations_returnList() {
         Donation d1 = new Donation();
+        d1.setPaymentStatus(Donation.PaymentStatus.success);
         Donation d2 = new Donation();
+        d2.setPaymentStatus(Donation.PaymentStatus.pending);
         when(donationsRepository.findAll()).thenReturn(Arrays.asList(d1, d2));
         List<Donation> list = donationService.getAllDonations();
         assertEquals(2, list.size());
@@ -103,6 +114,7 @@ class DonationServiceTest {
     @Test
     void getAllDonations_withPaging() {
         Donation d1 = new Donation();
+        d1.setPaymentStatus(Donation.PaymentStatus.success);
         Page<Donation> mockPage = new PageImpl<>(Collections.singletonList(d1));
         when(donationsRepository.findAll(any(Pageable.class))).thenReturn(mockPage);
         Page<Donation> page = donationService.getAllDonations(PageRequest.of(0, 10));
@@ -111,14 +123,18 @@ class DonationServiceTest {
 
     @Test
     void getDonationsByProject_returnList() {
-        when(donationsRepository.findByProjectId(anyLong())).thenReturn(Collections.singletonList(new Donation()));
+        Donation donation = new Donation();
+        donation.setPaymentStatus(Donation.PaymentStatus.success);
+        when(donationsRepository.findByProjectId(anyLong())).thenReturn(Collections.singletonList(donation));
         List<Donation> list = donationService.getDonationsByProject(5L);
         assertEquals(1, list.size());
     }
 
     @Test
     void getDonationsByDonor_returnList() {
-        when(donationsRepository.findByDonorId(anyLong())).thenReturn(Collections.singletonList(new Donation()));
+        Donation donation = new Donation();
+        donation.setPaymentStatus(Donation.PaymentStatus.success);
+        when(donationsRepository.findByDonorId(anyLong())).thenReturn(Collections.singletonList(donation));
         List<Donation> list = donationService.getDonationsByDonor(11L);
         assertEquals(1, list.size());
     }
