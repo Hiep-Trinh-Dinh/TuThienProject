@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,11 +38,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<Project> projects = projectService.getActiveProjects();
         List<ProjectDTO> projectDTOs = projects.stream()
-            .map(project -> {
-                ProjectDTO dto = ProjectDTO.fromEntity(project);
-                dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
-                return dto;
-            })
+            .map(this::mapProjectWithStats)
             .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
@@ -49,11 +47,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDTO>> getAllByOrderByStatusAsc() {
         List<Project> projects = projectService.getAllByOrderByStatusAsc();
         List<ProjectDTO> projectDTOs = projects.stream()
-                .map(project -> {
-                    ProjectDTO dto = ProjectDTO.fromEntity(project);
-                    dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
-                    return dto;
-                })
+                .map(this::mapProjectWithStats)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
@@ -66,7 +60,7 @@ public class ProjectController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.getDonatedProjects(pageable, userId);
-        Page<ProjectDTO> projectDTOs = projects.map(ProjectDTO::fromEntity);
+        Page<ProjectDTO> projectDTOs = projects.map(this::mapProjectWithStats);
         return ResponseEntity.ok(projectDTOs);
     }
 
@@ -82,13 +76,13 @@ public class ProjectController {
             @RequestParam(defaultValue = "6") int size,
             @RequestParam(required = false, defaultValue = "0") Long userId) {
 
+        if ((userId == null || userId <= 0) && (status == null || status.isEmpty())) {
+            status = "active";
+        }
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.searchProjects(q, category, status, sortBy, pageable, userId);
-        Page<ProjectDTO> projectDTOs = projects.map(project -> {
-            ProjectDTO dto = ProjectDTO.fromEntity(project);
-            dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
-            return dto;
-        });
+        Page<ProjectDTO> projectDTOs = projects.map(this::mapProjectWithStats);
         return ResponseEntity.ok(projectDTOs);
     }
     
@@ -96,8 +90,7 @@ public class ProjectController {
     public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Long id) {
         Optional<Project> project = projectService.getProjectById(id);
         return project.map(p -> {
-            ProjectDTO dto = ProjectDTO.fromEntity(p);
-            dto.setDonorCount(donationService.countDonorsByProject(p.getProjectId()));
+            ProjectDTO dto = mapProjectWithStats(p);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -106,7 +99,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDTO>> getProjectsByUserId(@PathVariable Long userId) {
         List<Project> projects = projectService.getProjectsByUserId(userId);
         List<ProjectDTO> projectDTOs = projects.stream()
-                .map(ProjectDTO::fromEntity)
+                .map(this::mapProjectWithStats)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
@@ -129,7 +122,7 @@ public class ProjectController {
             Project.Category categoryEnum = Project.Category.valueOf(category.toLowerCase());
             List<Project> projects = projectService.getProjectsByCategory(categoryEnum);
             List<ProjectDTO> projectDTOs = projects.stream()
-                    .map(ProjectDTO::fromEntity)
+                    .map(this::mapProjectWithStats)
                     .collect(Collectors.toList());
             return ResponseEntity.ok(projectDTOs);
         } catch (IllegalArgumentException e) {
@@ -142,7 +135,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDTO>> getProjectsSortedBy(@PathVariable String sortBy) {
         List<Project> projects = projectService.getProjectsSortedBy(sortBy);
         List<ProjectDTO> projectDTOs = projects.stream()
-                .map(ProjectDTO::fromEntity)
+                .map(this::mapProjectWithStats)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
@@ -150,14 +143,14 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<ProjectDTO> createProject(@RequestBody Project project) {
         Project savedProject = projectService.saveProject(project);
-        return ResponseEntity.ok(ProjectDTO.fromEntity(savedProject));
+        return ResponseEntity.ok(mapProjectWithStats(savedProject));
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @RequestBody Project project) {
         project.setProjectId(id);
         Project updatedProject = projectService.saveProject(project);
-        return ResponseEntity.ok(ProjectDTO.fromEntity(updatedProject));
+        return ResponseEntity.ok(mapProjectWithStats(updatedProject));
     }
     
     @DeleteMapping("/{id}")
@@ -174,5 +167,25 @@ public class ProjectController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "Không thể upload ảnh: " + e.getMessage()));
         }
+    }
+
+    private ProjectDTO mapProjectWithStats(Project project) {
+        ProjectDTO dto = ProjectDTO.fromEntity(project);
+        BigDecimal raisedAmount = donationService.getTotalDonationsByProject(project.getProjectId());
+        dto.setRaisedAmount(raisedAmount);
+        dto.setProgressPercentage(calculateProgressPercentage(raisedAmount, project.getGoalAmount()));
+        dto.setDonorCount(donationService.countDonorsByProject(project.getProjectId()));
+        return dto;
+    }
+
+    private double calculateProgressPercentage(BigDecimal raisedAmount, BigDecimal goalAmount) {
+        if (goalAmount == null || goalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0.0;
+        }
+        BigDecimal safeRaised = raisedAmount != null ? raisedAmount : BigDecimal.ZERO;
+        BigDecimal percentage = safeRaised
+                .divide(goalAmount, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        return Math.min(100.0, percentage.doubleValue());
     }
 }

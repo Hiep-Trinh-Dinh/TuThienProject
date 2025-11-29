@@ -173,27 +173,13 @@ export default function AdminProjectList() {
 
   // Delete project
   const handleDelete = async (projectId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa dự án này")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa dự án này? Hành động này không thể hoàn tác.")) return;
     try {
-      // Soft delete: load current project, then update status to pending
-      const current = await projectService.getProjectById(projectId);
-      if (!current) throw new Error('Project not found');
-      const payload = {
-        orgId: current.orgId,
-        title: current.title,
-        description: current.description,
-        imageUrl: current.imageUrl,
-        category: current.category,
-        goalAmount: current.goalAmount,
-        raisedAmount: current.raisedAmount,
-        startDate: current.startDate,
-        endDate: current.endDate,
-        status: 'pending',
-      };
-      await projectService.updateProject(projectId, payload);
+      await projectService.deleteProject(projectId);
       await reloadProjects();
     } catch (e) {
-      alert("Cập nhật trạng thái dự án thất bại");
+      console.error(e);
+      alert("Xóa dự án thất bại, vui lòng thử lại.");
     }
   };
 

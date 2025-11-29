@@ -81,7 +81,7 @@ export function DonationSection({ project }) {
       alert("Số tiền quyên góp tối thiểu là 50,000 VNĐ")
       return
     }
-    alert(userId);
+    // alert(userId);
     // if (!user.phone) {
     //   alert("Nhập đầy đủ thông tin trước khi quyên góp")
     //   navigate(`/profile/${userId}`)
