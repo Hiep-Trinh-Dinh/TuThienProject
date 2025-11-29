@@ -167,6 +167,7 @@ INSERT INTO users (full_name, email, password_hash, phone, status, auth_provider
 INSERT INTO role (name, description) VALUES
 ('admin', 'Quản trị viên - có toàn quyền quản lý hệ thống'),
 ('user', 'Người dùng thường - có quyền xem và quyên góp'),
+('vip_user', 'Người dùng VIP - có quyền tạo dự án cá nhân'),
 ('moderator', 'Người kiểm duyệt - có quyền duyệt dự án');
 
 -- PERMISSION
@@ -189,7 +190,8 @@ INSERT INTO role_permissions (role_name, permissions_name) VALUES
 ('moderator', 'PROJECT_APPROVE'),
 ('moderator', 'DONATION_VIEW'),
 ('user', 'PROJECT_CREATE'),
-('user', 'DONATION_VIEW');
+('user', 'DONATION_VIEW'),
+('vip_user', 'PROJECT_CREATE');
 
 -- USERS_ROLES
 INSERT INTO users_roles (user_user_id, roles_name) VALUES

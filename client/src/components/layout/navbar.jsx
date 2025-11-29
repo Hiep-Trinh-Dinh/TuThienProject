@@ -24,6 +24,8 @@ export function Navbar() {
             </div>
       );
   }
+
+  const roles = ["admin", "vip_user"];
   return (
     <nav className="bg-white border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,13 +77,16 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild>
-                    <Link to={`/account/pending-camps`} className="flex items-center">
-                      <BookHeart className="h-4 w-4 mr-2" />
-                    Project management
-                    </Link>
-                  </DropdownMenuItem>
-
+                  {roles.includes(user.roles[0].name) ? (
+                    <DropdownMenuItem asChild>
+                      <Link to={`/account/pending-camps`} className="flex items-center">
+                        <BookHeart className="h-4 w-4 mr-2" />
+                      Project management
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <></>
+                  )}
                   {user.authProvider === "LOCAL" ? 
                   (<DropdownMenuItem asChild>
                     <Link to={`/account/password/${user.userId}`} className="flex items-center">

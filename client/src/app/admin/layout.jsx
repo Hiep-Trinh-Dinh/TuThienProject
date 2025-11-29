@@ -1,7 +1,25 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../contexts/auth-context";
 import Sidebar from "../../components/admin/sidebar";
 
 export default function AdminLayout({ children }) {
+
+  const { user, loading } = useAuth(); // lấy thông tin user từ context
+  if (loading) {
+    return (<div className="spinner-container">
+            <div className="spinner"></div>
+            </div>
+      );
+  }
+  // Nếu chưa login then chuyển hướng sang trang /login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  } else if (user.roles[0].name !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+
   return (
     <div style={{ display: "flex", height: "100vh" }}>
       <Sidebar />
