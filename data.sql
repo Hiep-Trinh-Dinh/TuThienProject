@@ -39,7 +39,7 @@ CREATE TABLE donations (
     donor_id BIGINT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     payment_method ENUM('vnpay','viettel_money','momo','credit_card','bank_transfer') NOT NULL,
-    payment_status ENUM('success','pending','failed') DEFAULT 'success',
+    payment_status ENUM('success','pending','failed') DEFAULT 'failed',
     donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     order_id VARCHAR(100),
     FOREIGN KEY (project_id) REFERENCES projects(project_id),

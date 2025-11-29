@@ -14,10 +14,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import com.example.server.service.NotificationProducer;
 import com.example.server.dto.request.MailBodyRequest;
 import com.example.server.repository.UserRepository;
-import com.example.server.service.EmailService;
 
 @Service
 @Transactional
@@ -43,7 +41,7 @@ public class DonationService {
         System.out.println("[CREATE_DONATION] Tạo do Donation của test ");
 
         donation.setDonatedAt(LocalDateTime.now());
-        donation.setPaymentStatus(Donation.PaymentStatus.pending);
+        donation.setPaymentStatus(Donation.PaymentStatus.failed);
         //Donation savedDonation = donationRepository.save(donation);
 
         // Cập nhật raised amount của project ngay sau khi tạo donation thành công
