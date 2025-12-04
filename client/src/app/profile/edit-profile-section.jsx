@@ -191,12 +191,11 @@ function EditProfileSection(){
             setSnackBarMessage("Full name cannot be empty.")
             setSnackBarErrorOpen(true)
             accept = false
-        }else if(!nameRegex.test(form.fullName)){
+        }else if(!nameRegex.test(form.fullName) && userData.roles[0].name !== "admin"){
             setSnackBarMessage("Your full name is not true.")
             setSnackBarErrorOpen(true)
             accept = false
         }
-        
         if(form.phone && !phoneRegex.test(form.phone)){
             setSnackBarMessage("Your phone number is not valid.")
             setSnackBarErrorOpen(true)

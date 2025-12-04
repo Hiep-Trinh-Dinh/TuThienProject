@@ -93,7 +93,7 @@ function PendingCampSection(){
       const [previewUrl, setPreviewUrl] = useState("");
     
       const [currentPage, setCurrentPage] = useState(1);
-      const itemsPerPage = 6;
+      const itemsPerPage = 4;
       useEffect(() => { setCurrentPage(1); }, [projects.length]);
       const totalPages = Math.ceil(projects.length / itemsPerPage) || 1;
       const currentData = projects.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);

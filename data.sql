@@ -29,7 +29,8 @@ CREATE TABLE projects (
     end_date DATE,
     status ENUM('pending','active','closed','rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (org_id) REFERENCES users(user_id)
+    FOREIGN KEY (org_id) REFERENCES users(user_id),
+    image_url VARCHAR(500)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3. Bảng donations
@@ -203,13 +204,17 @@ INSERT INTO users_roles (user_user_id, roles_name) VALUES
 (6, 'user');
 
 -- PROJECTS
-INSERT INTO projects (org_id, title, description, category, goal_amount, raised_amount, start_date, end_date, status, created_at) VALUES
-(1, 'Cứu trợ lũ lụt miền Trung', 'Hỗ trợ người dân vùng lũ lụt miền Trung với quỹ cứu trợ khẩn cấp', 'thien_tai', 20000000, 8000000, '2023-10-01', '2023-12-15', 'active', '2023-09-01'),
-(1, 'Chương trình Mùa đông ấm', 'Tặng áo ấm cho trẻ em miền núi phía Bắc', 'tre_em', 15000000, 4000000, '2023-11-01', '2023-12-20', 'pending', '2023-10-10'),
-(2, 'Hỗ trợ bệnh nhi ung thư', 'Gây quỹ cho các cháu điều trị ung thư tại bệnh viện Nhi Trung ương', 'y_te', 30000000, 20000000, '2023-05-15', '2023-09-01', 'closed', '2023-03-01'),
-(2, 'Xây dựng trường học vùng cao', 'Xây dựng trường học cho trẻ em vùng cao Tây Bắc', 'tre_em', 50000000, 15000000, '2023-08-01', '2024-02-28', 'active', '2023-07-15'),
-(3, 'Bảo vệ môi trường biển', 'Chiến dịch làm sạch bãi biển và bảo vệ sinh vật biển', 'moi_truong', 10000000, 3000000, '2023-09-01', '2023-12-31', 'active', '2023-08-20');
-
+INSERT INTO projects (org_id, title, description, category, goal_amount, raised_amount, start_date, end_date, status, created_at, image_url) VALUES
+(1, 'Cứu trợ lũ lụt miền Trung', 'Hỗ trợ người dân vùng lũ lụt miền Trung với quỹ cứu trợ khẩn cấp', 'thien_tai', 20000000, 8000000, '2023-10-01', '2023-12-15', 'active', '2023-09-01', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756189/projects/projects/project_20251203170305394.jpg.jpg'),
+(1, 'Chương trình Mùa đông ấm', 'Tặng áo ấm cho trẻ em miền núi phía Bắc', 'tre_em', 15000000, 4000000, '2023-11-01', '2023-12-20', 'pending', '2023-10-10', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756220/projects/projects/project_20251203170334078.jpg.jpg'),
+(2, 'Hỗ trợ bệnh nhi ung thư', 'Gây quỹ cho các cháu điều trị ung thư tại bệnh viện Nhi Trung ương', 'y_te', 30000000, 20000000, '2023-05-15', '2023-09-01', 'closed', '2023-03-01', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756239/projects/projects/project_20251203170355394.jpg.jpg'),
+(2, 'Xây dựng trường học vùng cao', 'Xây dựng trường học cho trẻ em vùng cao Tây Bắc', 'tre_em', 50000000, 15000000, '2023-08-01', '2024-02-28', 'active', '2023-07-15', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756251/projects/projects/project_20251203170406512.jpg.jpg'),
+(3, 'Bảo vệ môi trường biển', 'Chiến dịch làm sạch bãi biển và bảo vệ sinh vật biển', 'moi_truong', 10000000, 3000000, '2023-09-01', '2023-12-31', 'active', '2023-08-20', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756269/projects/projects/project_20251203170426088.jpg.jpg'),
+(1, 'Bữa Ăn Ấm Áp', 'Dự án cung cấp các suất ăn dinh dưỡng hằng tuần cho người vô gia cư, người lao động nghèo và các cụ già neo đơn tại khu vực TP.HCM. Tình nguyện viên sẽ trực tiếp chuẩn bị, đóng hộp và phân phát các phần ăn trong buổi tối. Mỗi suất ăn được tính toán để đảm bảo đủ dinh dưỡng và an toàn thực phẩm.', 'khac', 5000000000, 80000000, '2025-12-03', '2025-12-31', 'active', '2025-12-03', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756362/projects/projects/project_20251203170557402.jpg.jpg'),
+(1, 'Tiếp Sức Đến Trường', 'Mục tiêu của dự án là hỗ trợ học sinh nghèo tại các vùng sâu vùng xa có hoàn cảnh khó khăn. Dự án trao tặng tập vở, sách giáo khoa, balo, áo ấm và học bổng. Ngoài ra còn tổ chức các lớp học kỹ năng sống và hướng nghiệp giúp các em phát triển toàn diện hơn.', 'tre_em', 10000000000, 40000000, '2025-12-03', '2025-12-31', 'active', '2025-12-31', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756521/projects/projects/project_20251203170836319.webp.webp'),
+(2, 'Ngôi Nhà Yêu Thương', 'Dự án xây mới hoặc sửa chữa nhà ở xuống cấp cho các hộ gia đình nghèo, người già neo đơn hoặc các gia đình chịu thiên tai. Tình nguyện viên và đội thợ địa phương sẽ phối hợp để hoàn thành công trình an toàn, vững chắc, giúp họ có mái ấm ổn định.', 'khac', 1000000000000, 200000000, '2025-12-03', '2025-12-31', 'active', '2025-12-31', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756724/projects/projects/project_20251203171159676.jpg.jpg'),
+(2, 'Xanh Hóa Cộng Đồng', 'Dự án hướng đến trồng cây xanh tại trường học, công viên, khu dân cư nhằm cải thiện chất lượng không khí và nâng cao ý thức bảo vệ môi trường. Ngoài việc trồng cây, dự án còn tổ chức ngày “Green Day” để dọn rác, phân loại rác và tập huấn tái chế cho cư dân.', 'moi_truong', 5000000000, 150000000, '2025-12-03', '2025-12-31', 'active', '2025-12-31', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764756789/projects/projects/project_20251203171304972.webp.webp'),
+(3, 'Kết Nối Yêu Thương', 'Chương trình đến thăm và hỗ trợ tinh thần cho người già sống tại các viện dưỡng lão hoặc sống một mình. Dự án bao gồm tặng quà, trò chuyện, tổ chức các hoạt động văn nghệ, khám sức khỏe miễn phí và hỗ trợ thuốc men cơ bản cho các cụ.', 'khac', 1000000000, 300000000, '2025-12-03', '2025-12-31', 'active', '2025-12-31', 'https://res.cloudinary.com/digj9t8om/image/upload/v1764757209/projects/projects/project_20251203172004719.jpg.jpg');
 -- DONATIONS
 INSERT INTO donations (project_id, donor_id, amount, payment_method, payment_status, donated_at) VALUES
 (1, 2, 1000000, 'vnpay', 'success', '2023-10-20 10:30:00'),
