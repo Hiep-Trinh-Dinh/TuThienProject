@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import userService from "../../services/userService";
 import UserRolesManagement from "./user-roles";
+import { UsersFilters } from "../../components/user/user-filter"
+import { SearchInfo } from "../../components/user/search-info"
+import { Pagination } from "../../components/ui/pagination"
 
 export default function AdminUserList() {
   const [users, setUsers] = useState([]);
@@ -8,29 +11,78 @@ export default function AdminUserList() {
   const [error, setError] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [viewUser, setViewUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-  useEffect(() => { setCurrentPage(1); }, [users.length]);
-  const totalPages = Math.ceil(users.length / itemsPerPage) || 1;
-  const currentData = users.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  // users filter
+  const [selectedAuthProvider, setSelectedAuthProvider] = useState("All Authentication Providers")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("newest")
 
-  const loadUsers = () => {
-    setLoading(true);
-    setError("");
-    userService.getAllUsers()
-      .then((data) => {
-        // Nếu backend trả về { result: [...] } thì lấy data.result, nếu trả về list thì lấy trực tiếp.
-        if (Array.isArray(data)) setUsers(data);
-        else if (data.result && Array.isArray(data.result)) setUsers(data.result);
-        else setUsers([]);
-      })
-      .catch(() => setError("Lỗi tải dữ liệu người dùng"))
-      .finally(() => setLoading(false));
-  };
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [size] = useState(6)
+  
+
+useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await userService.searchUsers(
+          searchQuery,
+          selectedAuthProvider,
+          selectedStatus,
+          sortBy,
+          currentPage,
+          size
+        )
+        if (Array.isArray(response)) {
+          const total = response.length
+          const pages = Math.ceil(total / size)
+          const sliceStart = currentPage * size
+          const sliceEnd = sliceStart + size
+          setUsers(response.slice(sliceStart, sliceEnd))
+          setTotalPages(pages)
+          setTotalElements(total)
+        } else {
+          setUsers(response.content || [])
+          setTotalPages(response.totalPages ?? 0)
+          setTotalElements(response.totalElements ?? (response.content ? response.content.length : 0))
+        }
+      } catch (err) {
+        setError(err.message)
+        console.error('Error loading projects:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    const timeoutId = setTimeout(loadUsers, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, selectedAuthProvider, selectedStatus, sortBy, currentPage]);
+
+  // Reset to first page when filters change
+    useEffect(() => {
+      setCurrentPage(0)
+    }, [searchQuery, selectedAuthProvider, selectedStatus, sortBy,size])
+
+  // useEffect(() => {
+  //   loadUsers();
+  // }, []);
+
+  // const loadUsers = () => {
+  //   setLoading(true);
+  //   setError("");
+  //   userService.getAllUsers()
+  //     .then((data) => {
+  //       // Nếu backend trả về { result: [...] } thì lấy data.result, nếu trả về list thì lấy trực tiếp.
+  //       if (Array.isArray(data)) setUsers(data);
+  //       else if (data.result && Array.isArray(data.result)) setUsers(data.result);
+  //       else setUsers([]);
+  //     })
+  //     .catch(() => setError("Lỗi tải dữ liệu người dùng"))
+  //     .finally(() => setLoading(false));
+  // };
 
   const toggleLock = async (user) => {
     const userId = user.userId || user.id || user.user_id;
@@ -46,9 +98,35 @@ export default function AdminUserList() {
     }
   };
 
+  const handlePageChange = (page) => {
+    if (page < 0 || page >= totalPages) return
+    setCurrentPage(page)
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Quản lý Người dùng</h2>
+      <div className="mb-3">
+        <UsersFilters
+          selectedAuthProvider={selectedAuthProvider}
+          setSelectedAuthProvider={setSelectedAuthProvider}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          totalResults={totalElements}
+        />
+        <SearchInfo
+          searchQuery={searchQuery}
+          selectedAuthProvider={selectedAuthProvider}
+          selectedStatus={selectedStatus}
+          sortBy={sortBy}
+          onClearFilter={handleClearFilters}
+        />
+      </div>
       {loading ? (
         <div>Đang tải dữ liệu...</div>
       ) : error ? (
@@ -68,7 +146,7 @@ export default function AdminUserList() {
           </tr>
         </thead>
         <tbody>
-          {currentData.map((u) => {
+          {users.map((u) => {
             const userId = u.userId || u.id || u.user_id;
             const userRoles = u.roles || [];
             const roleNames = userRoles.map(r => r.name || r).join(', ') || 'Chưa có quyền';
@@ -110,22 +188,13 @@ export default function AdminUserList() {
       )}
 
       {totalPages > 1 && (
-        <div className="flex gap-2 mt-4 items-center justify-center">
-          <button
-            className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(p => p-1)}
-            disabled={currentPage === 1}>{"<"}</button>
-          {Array.from({length: totalPages}).map((_, idx) => (
-            <button
-              key={idx}
-              className={`px-3 py-1 rounded ${currentPage === idx+1 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100'}`}
-              onClick={() => setCurrentPage(idx+1)}>{idx+1}</button>
-          ))}
-          <button
-            className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(p => p+1)}
-            disabled={currentPage === totalPages}>{">"}</button>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          totalElements={totalElements}
+          size={size}
+        />
       )}
 
       {/* Modal quản lý quyền */}
@@ -165,4 +234,11 @@ export default function AdminUserList() {
       )}
     </div>
   );
+  function handleClearFilters() {
+    setSearchQuery("")
+    setSelectedAuthProvider("All Authentication Providers")
+    setSelectedStatus("all")
+    setSortBy("newest")
+    setCurrentPage(0)
+  }
 }

@@ -15,6 +15,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -284,5 +288,38 @@ public class UserService {
         return userMapper.toUserResponse(existing);
     }
 
+    // Get users with filters
+    public Page<User> searchUsers(String q, String authProvider, String status, String sortBy, Pageable pageable) {
+        // Create pageable with sorting
+        Pageable sortedPageable = pageable;
+        if (sortBy != null && !sortBy.isEmpty()) {
+            switch (sortBy.toLowerCase()) {
+                case "newest":
+                    sortedPageable = PageRequest.of(
+                            pageable.getPageNumber(),
+                            pageable.getPageSize(),
+                            Sort.by("createdAt").descending()
+                    );
+                    break;
+                default:
+                    sortedPageable = PageRequest.of(
+                            pageable.getPageNumber(),
+                            pageable.getPageSize(),
+                            Sort.by("createdAt").descending()
+                    );
+                    break;
+            }
+        }
 
+        User.Status statusEnum = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                statusEnum = User.Status.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                // Invalid status, will be ignored
+            }
+        }
+
+        return userRepository.findUsersWithFilters(q, authProvider, statusEnum, sortBy, sortedPageable);
+    }
 }

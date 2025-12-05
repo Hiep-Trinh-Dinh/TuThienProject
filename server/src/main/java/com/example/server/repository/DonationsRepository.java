@@ -1,6 +1,7 @@
 package com.example.server.repository;
 
 import com.example.server.entity.Donation;
+import com.example.server.entity.Project;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -56,4 +58,26 @@ public interface DonationsRepository extends JpaRepository<Donation, Long> {
     // Top donations gần nhất
     @Query("SELECT d FROM Donation d WHERE d.paymentStatus = 'success' ORDER BY d.donatedAt DESC")
     Page<Donation> findRecentSuccessfulDonations(Pageable pageable);
+
+    @Query("""
+    SELECT d FROM Donation d
+    WHERE
+        (:paymentMethodEnum IS NULL OR d.paymentMethod = :paymentMethodEnum)
+        AND (:paymentStatusEnum IS NULL OR d.paymentStatus = :paymentStatusEnum)
+        AND (:from IS NULL OR d.donatedAt >= :from)
+        AND (:to IS NULL OR d.donatedAt <= :to)
+        AND (:amountFrom IS NULL OR d.amount >= :amountFrom)
+        AND (:amountTo IS NULL OR d.amount <= :amountTo)
+    """)
+    Page<Donation> findDonationsWithFilters(
+            @Param("paymentMethodEnum") Donation.PaymentMethod paymentMethodEnum,
+            @Param("paymentStatusEnum") Donation.PaymentStatus paymentStatusEnum,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("amountFrom") BigDecimal amountFrom,
+            @Param("amountTo") BigDecimal amountTo,
+            @Param("sortBy") String sortBy,
+            Pageable pageable
+    );
+
 }

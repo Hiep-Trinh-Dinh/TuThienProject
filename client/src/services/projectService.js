@@ -115,8 +115,8 @@ class ProjectService {
     try {
       const params = new URLSearchParams();
       if (query) params.append('q', query);
-      if (category && category !== 'All Categories') params.append('category', category);
-      if (status && status !== 'all') params.append('status', status);
+      if (category) params.append('category', category);
+      if (status) params.append('status', status);
       if (sortBy) params.append('sortBy', sortBy);
       params.append('page', page);
       params.append('size', size);

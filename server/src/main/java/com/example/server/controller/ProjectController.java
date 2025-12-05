@@ -64,8 +64,6 @@ public class ProjectController {
         return ResponseEntity.ok(projectDTOs);
     }
 
-
-
     @GetMapping("/search")
     public ResponseEntity<Page<ProjectDTO>> searchProjects(
             @RequestParam(required = false) String q,

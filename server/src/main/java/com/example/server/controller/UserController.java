@@ -1,16 +1,17 @@
 package com.example.server.controller;
 
-import com.example.server.dto.request.PasswordRequestDTO;
-import com.example.server.dto.request.RegisterRequestDTO;
-import com.example.server.dto.request.UpdateUserInfoRequestDTO;
-import com.example.server.dto.request.UserUpdateRequest;
+import com.example.server.dto.request.*;
 import com.example.server.dto.response.ApiResponse;
 import com.example.server.dto.response.UserResponse;
 import com.example.server.entity.User;
+import com.example.server.mapper.UserMapper;
 import com.example.server.service.FileStorageService;
 import com.example.server.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final FileStorageService fileStorageService;
+    private final UserMapper userMapper;
 
     // dang ky tao tai khoan
     @PostMapping("/register")
@@ -73,6 +75,30 @@ public class UserController {
         ApiResponse<List<UserResponse>> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.getAllUsers());
         return apiResponse;
+    }
+
+    // filter users
+    @GetMapping("/search")
+    public ResponseEntity<Page<UserResponse>> searchUsers(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String authProvider,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size) {
+
+        if ((status == null || status.isEmpty())) {
+            status = "ACTIVE";
+        }
+
+        if (authProvider.equals("All Authentication Providers")) {
+            authProvider = null;
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> users = userService.searchUsers(q, authProvider, status, sortBy, pageable);
+        Page<UserResponse> userResponses = users.map(userMapper::toUserResponse);
+        return ResponseEntity.ok(userResponses);
     }
 
     // lay user qua email -- Đổi path cho an toàn

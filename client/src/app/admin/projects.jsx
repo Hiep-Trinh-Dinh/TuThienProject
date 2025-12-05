@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from "react";
 import projectService from "../../services/projectService";
+import { ProjectFilters } from "../../components/projects/project-filters"
+import { SearchInfo } from "../../components/projects/search-info"
+import { Pagination } from "../../components/ui/pagination"
 
 export default function AdminProjectList() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // project filter
+  const [selectedCategory, setSelectedCategory] = useState("All Categories")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("newest")
 
   // Form state for creating a new project
   const [form, setForm] = useState({
@@ -16,6 +25,7 @@ export default function AdminProjectList() {
     startDate: "",
     endDate: "",
   });
+
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -28,25 +38,56 @@ export default function AdminProjectList() {
   const [editError, setEditError] = useState("");
   const [editImageUploading, setEditImageUploading] = useState(false);
 
-  // Thêm state preview image local
-  const [localImagePreview, setLocalImagePreview] = useState("");
-
   // Thêm state preview ảnh và file ảnh local
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-  useEffect(() => { setCurrentPage(1); }, [projects.length]);
-  const totalPages = Math.ceil(projects.length / itemsPerPage) || 1;
-  const currentData = projects.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [size] = useState(6)
 
   useEffect(() => {
-    projectService.getAllTypeProjects()
-      .then((data) => setProjects(data))
-      .catch((err) => setError("Lỗi tải dữ liệu dự án"))
-      .finally(() => setLoading(false));
-  }, []);
+    const loadProjects = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await projectService.searchProjects(
+          searchQuery,
+          selectedCategory,
+          selectedStatus,
+          sortBy,
+          currentPage,
+          size
+        )
+        if (Array.isArray(response)) {
+          const total = response.length
+          const pages = Math.ceil(total / size)
+          const sliceStart = currentPage * size
+          const sliceEnd = sliceStart + size
+          setProjects(response.slice(sliceStart, sliceEnd))
+          setTotalPages(pages)
+          setTotalElements(total)
+        } else {
+          setProjects(response.content || [])
+          setTotalPages(response.totalPages ?? 0)
+          setTotalElements(response.totalElements ?? (response.content ? response.content.length : 0))
+        }
+      } catch (err) {
+        setError(err.message)
+        console.error('Error loading projects:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    const timeoutId = setTimeout(loadProjects, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, selectedCategory, selectedStatus, sortBy, currentPage]);
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [searchQuery, selectedCategory, selectedStatus, sortBy,size])
+
 
   // Xử lý effect khi đổi selectedFile (và dọn dẹp Object URL)
   useEffect(() => {
@@ -60,18 +101,6 @@ export default function AdminProjectList() {
       setPreviewUrl("");
     }
   }, [selectedFile, form.imageUrl]);
-
-  const reloadProjects = async () => {
-    setLoading(true);
-    try {
-      const data = await projectService.getAllTypeProjects();
-      setProjects(data);
-    } catch (e) {
-      setError("Lỗi tải dữ liệu dự án");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -148,8 +177,9 @@ export default function AdminProjectList() {
       await projectService.createProject(payload);
       // Refresh list
       setLoading(true);
-      const data = await projectService.getAllTypeProjects();
-      setProjects(data);
+
+      setCurrentPage(0);
+
       setLoading(false);
       // Reset form
       setForm({ title: "", description: "", imageUrl: "", category: "tre_em", goalAmount: "", startDate: "", endDate: "" });
@@ -176,7 +206,7 @@ export default function AdminProjectList() {
     if (!window.confirm("Bạn có chắc muốn xóa dự án này? Hành động này không thể hoàn tác.")) return;
     try {
       await projectService.deleteProject(projectId);
-      await reloadProjects();
+      setCurrentPage(0);
     } catch (e) {
       console.error(e);
       alert("Xóa dự án thất bại, vui lòng thử lại.");
@@ -248,7 +278,7 @@ export default function AdminProjectList() {
       }
       await projectService.updateProject(editProject.projectId, payload);
       setEditProject(null);
-      await reloadProjects();
+      setCurrentPage(0);
     } catch (e) {
       setEditError("Cập nhật thất bại. Vui lòng thử lại");
     } finally {
@@ -262,6 +292,12 @@ export default function AdminProjectList() {
           currency: currency,
       }).format(amount);
   }
+
+  const handlePageChange = (page) => {
+    if (page < 0 || page >= totalPages) return
+    setCurrentPage(page)
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+  }
   
   return (
     <div>
@@ -272,6 +308,24 @@ export default function AdminProjectList() {
         <button onClick={() => setShowCreateForm((v) => !v)} className={`${showCreateForm ? 'bg-gray-500 hover:bg-gray-600' : 'bg-emerald-600 hover:bg-emerald-700'} text-white rounded-md px-4 py-2 transition`}>
           {showCreateForm ? "Ẩn form" : "Tạo dự án mới"}
         </button>
+        <ProjectFilters
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          totalResults={totalElements}
+        />
+        <SearchInfo
+          searchQuery={searchQuery}
+          selectedCategory={selectedCategory}
+          selectedStatus={selectedStatus}
+          sortBy={sortBy}
+          onClearFilter={handleClearFilters}
+        />
       </div>
 
       {/* Create project form */}
@@ -351,14 +405,14 @@ export default function AdminProjectList() {
             </tr>
           </thead>
           <tbody>
-            {currentData.length === 0 ? (
+            {projects.length === 0 ? (
               <tr>
                 <td colSpan="5" className="border border-gray-300 p-5 text-center text-gray-600">
                   Không có dữ liệu dự án
                 </td>
               </tr>
             ) : (
-              currentData.map((project, idx) => {
+              projects.map((project, idx) => {
                 const projectId = project.projectId || project.id || project.project_id || idx;
                 const status = project.status || 'N/A';
                 const createdAt = project.createdAt || project.created_at;
@@ -408,22 +462,13 @@ export default function AdminProjectList() {
       )}
 
       {totalPages > 1 && (
-        <div className="flex gap-2 mt-4 items-center justify-center">
-          <button
-            className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(p => p-1)}
-            disabled={currentPage === 1}>{"<"}</button>
-          {Array.from({length: totalPages}).map((_, idx) => (
-            <button
-              key={idx}
-              className={`px-3 py-1 rounded ${currentPage === idx+1 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100'}`}
-              onClick={() => setCurrentPage(idx+1)}>{idx+1}</button>
-          ))}
-          <button
-            className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(p => p+1)}
-            disabled={currentPage === totalPages}>{">"}</button>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          totalElements={totalElements}
+          size={size}
+        />
       )}
 
       {/* View Modal */}
@@ -522,4 +567,11 @@ export default function AdminProjectList() {
       )}
     </div>
   );
+  function handleClearFilters() {
+    setSearchQuery("")
+    setSelectedCategory("All Categories")
+    setSelectedStatus("all")
+    setSortBy("newest")
+    setCurrentPage(0)
+  }
 }

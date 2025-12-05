@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getDonations, updateDonationStatus } from "../../services/donationService";
+import { getDonations, updateDonationStatus, searchDonations } from "../../services/donationService";
 import axios from "axios";
+import { DonationsFilters } from "../../components/donations/donations-filter"
+import { SearchInfo } from "../../components/donations/search-info"
+import { Pagination } from "../../components/ui/pagination"
 
 function statusColor(status) {
   switch (status) {
@@ -20,26 +23,64 @@ export default function AdminDonationsList() {
   const [editStatus, setEditStatus] = useState("pending");
   const [saving, setSaving] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-  useEffect(() => { setCurrentPage(1); }, [donations.length]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("All Payment Methods")
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("all")
+  const [selectedFrom, setSelectedFrom] = useState("")
+  const [selectedTo, setSelectedTo] = useState("")
+  const [selectedAmountFrom, setSelectedAmountFrom] = useState("")
+  const [selectedAmountTo, setSelectedAmountTo] = useState("")
+  const [sortBy, setSortBy] = useState("newest")
 
-  const loadDonations = () => {
-    setLoading(true);
-    setError("");
-    getDonations()
-      .then(data => setDonations(Array.isArray(data) ? data : (data?.content || [])))
-      .catch(() => setError("Lỗi tải dữ liệu quyên góp"))
-      .finally(() => setLoading(false));
-  };
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [size] = useState(6)
 
   useEffect(() => {
-    loadDonations();
-  }, []);
-
-  const totalPages = Math.ceil(donations.length / itemsPerPage) || 1;
-  const currentData = donations.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
-
+    const loadDonations = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await searchDonations(
+          selectedPaymentMethod,
+          selectedPaymentStatus,
+          selectedFrom,
+          selectedTo,
+          selectedAmountFrom,
+          selectedAmountTo,
+          sortBy,
+          currentPage,
+          size
+        )
+        if (Array.isArray(response)) {
+          const total = response.length
+          const pages = Math.ceil(total / size)
+          const sliceStart = currentPage * size
+          const sliceEnd = sliceStart + size
+          setDonations(response.slice(sliceStart, sliceEnd))
+          setTotalPages(pages)
+          setTotalElements(total)
+        } else {
+          setDonations(response.content || [])
+          setTotalPages(response.totalPages ?? 0)
+          setTotalElements(response.totalElements ?? (response.content ? response.content.length : 0))
+        }
+      } catch (err) {
+        setError(err.message)
+        console.error('Error loading projects:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    const timeoutId = setTimeout(loadDonations, 300)
+    return () => clearTimeout(timeoutId)
+  }, [selectedPaymentMethod, selectedPaymentStatus, selectedFrom, selectedTo, selectedAmountFrom, selectedAmountTo, sortBy, currentPage]);
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [selectedPaymentMethod, selectedPaymentStatus, selectedFrom, selectedTo, selectedAmountFrom, selectedAmountTo, sortBy,size])
+  
+  
   const openEdit = (d) => {
     setEditDonation(d);
     setEditStatus(d.paymentStatus || "pending");
@@ -52,7 +93,7 @@ export default function AdminDonationsList() {
       setSaving(true);
       await updateDonationStatus(editDonation.donationId, editStatus);
       setEditDonation(null);
-      loadDonations();
+      setCurrentPage();
     } catch (err) {
       alert("Cập nhật trạng thái thất bại");
     } finally {
@@ -83,9 +124,41 @@ export default function AdminDonationsList() {
     }
   };
 
+  const handlePageChange = (page) => {
+    if (page < 0 || page >= totalPages) return
+    setCurrentPage(page)
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+  }
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Quản lý Quyên góp</h2>
+      <DonationsFilters
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={setSelectedPaymentMethod}
+        selectedPaymentStatus={selectedPaymentStatus}
+        setSelectedPaymentStatus={setSelectedPaymentStatus}
+        selectedFrom={selectedFrom}
+        setSelectedFrom={setSelectedFrom}
+        selectedTo={selectedTo}
+        setSelectedTo={setSelectedTo}
+        selectedAmountFrom={selectedAmountFrom}
+        setSelectedAmountFrom={setSelectedAmountFrom}
+        selectedAmountTo={selectedAmountTo}
+        setSelectedAmountTo={setSelectedAmountTo}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        totalResults={totalElements}
+      />
+      <SearchInfo
+        selectedPaymentMethod={selectedPaymentMethod}
+        selectedPaymentStatus={selectedPaymentStatus}
+        selectedFrom={selectedFrom}
+        selectedTo={selectedTo}
+        selectedAmountFrom={selectedAmountFrom}
+        selectedAmountTo={selectedAmountTo}
+        sortBy={sortBy}
+        onClearFilter={handleClearFilters}
+      />
       <div className="mb-3 flex items-center justify-between">
         <button
           onClick={handleExportExcel}
@@ -115,12 +188,12 @@ export default function AdminDonationsList() {
               </tr>
             </thead>
             <tbody>
-              {currentData.length === 0 ? (
+              {donations.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="border border-gray-300 p-5 text-center text-gray-600">Không có dữ liệu quyên góp</td>
                 </tr>
               ) : (
-                currentData.map((d) => (
+                donations.map((d) => (
                   <tr key={d.donationId}>
                     <td className="border border-gray-300 px-3 py-2 align-middle">{d.donationId}</td>
                     <td className="border border-gray-300 px-3 py-2 align-middle">{d.donorName || d.donorId}</td>
@@ -141,25 +214,13 @@ export default function AdminDonationsList() {
         </div>
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex gap-2 mt-4 items-center justify-center">
-            <button
-              className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-              onClick={() => setCurrentPage(p => p-1)}
-              disabled={currentPage === 1}
-            >{"<"}</button>
-            {Array.from({length: totalPages}).map((_, idx) => (
-              <button
-                key={idx}
-                className={`px-3 py-1 rounded ${currentPage === idx+1 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100'}`}
-                onClick={() => setCurrentPage(idx+1)}
-              >{idx+1}</button>
-            ))}
-            <button
-              className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-              onClick={() => setCurrentPage(p => p+1)}
-              disabled={currentPage === totalPages}
-            >{" >"}</button>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalElements={totalElements}
+            size={size}
+          />
         )}
         </>
       )}
@@ -211,4 +272,14 @@ export default function AdminDonationsList() {
       )}
     </div>
   );
+  function handleClearFilters() {
+    setSelectedPaymentMethod("All Payment Methods")
+    setSelectedPaymentStatus("all")
+    setSelectedFrom("")
+    setSelectedTo("")
+    setSelectedAmountFrom("")
+    setSelectedAmountTo("")
+    setSortBy("newest")
+    setCurrentPage(0)
+  }
 }

@@ -75,6 +75,34 @@ class UserService {
       throw error;
     }
   }
+
+  // Tìm kiếm users nâng cao với phân trang
+  async searchUsers(query, authProvider, status, sortBy, page = 0, size = 6) {
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams();
+      if (query) params.append('q', query);
+      if (authProvider) params.append('authProvider', authProvider);
+      if (status) params.append('status', status);
+      if (sortBy) params.append('sortBy', sortBy);
+      params.append('page', page);
+      params.append('size', size);
+
+      const response = await fetch(`${API_BASE_URL}/search?${params}`,{
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error searching users:`, error);
+      throw error;
+    }
+  }
 }
 
 export default new UserService();

@@ -7,7 +7,9 @@ import com.example.server.repository.DonationsRepository;
 import com.example.server.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -210,5 +212,56 @@ String subject = "Cảm ơn bạn đã quyên góp cho dự án!";
     // Lấy donation theo orderId
     public Donation getDonationByOrderId(String orderId) {
         return donationRepository.findByOrderId(orderId);
+    }
+
+    public Page<Donation> searchDonations(String paymentMethod, String paymentStatus, LocalDateTime from, LocalDateTime to, BigDecimal amountFrom, BigDecimal amountTo, String sortBy, Pageable pageable) {
+        // Create pageable with sorting
+        Pageable sortedPageable = pageable;
+        if (sortBy != null && !sortBy.isEmpty()) {
+            switch (sortBy.toLowerCase()) {
+                case "newest":
+                    sortedPageable = PageRequest.of(
+                            pageable.getPageNumber(),
+                            pageable.getPageSize(),
+                            Sort.by("donatedAt").descending()
+                    );
+                    break;
+                case "highest":
+                    sortedPageable = PageRequest.of(
+                            pageable.getPageNumber(),
+                            pageable.getPageSize(),
+                            Sort.by("amount").descending()
+                    );
+                    break;
+                default:
+                    sortedPageable = PageRequest.of(
+                            pageable.getPageNumber(),
+                            pageable.getPageSize(),
+                            Sort.by("donatedAt").descending()
+                    );
+                    break;
+            }
+        }
+
+        // Convert string to enum
+        Donation.PaymentMethod paymentMethodEnum = null;
+        if (paymentMethod != null && !paymentMethod.isEmpty()) {
+            try {
+                paymentMethodEnum = Donation.PaymentMethod.valueOf(paymentMethod.toLowerCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid category, will be ignored
+            }
+        }
+
+        Donation.PaymentStatus paymentStatusEnum = null;
+        if (paymentStatus != null && !paymentStatus.isEmpty()) {
+            try {
+                paymentStatusEnum = Donation.PaymentStatus.valueOf(paymentStatus.toLowerCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid status, will be ignored
+            }
+        }
+
+        return donationRepository.findDonationsWithFilters(paymentMethodEnum, paymentStatusEnum, from, to, amountFrom, amountTo, sortBy, sortedPageable);
     }
 }

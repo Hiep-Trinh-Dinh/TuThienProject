@@ -1,9 +1,12 @@
 package com.example.server.controller;
 
 import com.example.server.dto.DonationDTO;
+import com.example.server.dto.request.ProjectDTO;
 import com.example.server.dto.response.GlobalStatsResponse;
 import com.example.server.dto.response.PaymentResponse;
 import com.example.server.entity.Donation;
+import com.example.server.entity.Project;
+import com.example.server.mapper.DonationMapper;
 import com.example.server.service.DonationReportService;
 import com.example.server.service.DonationService;
 import com.example.server.service.PaymentService;
@@ -17,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,12 +35,15 @@ public class DonationController {
     private final DonationService donationService;
     private final PaymentService paymentService;
     private final DonationReportService donationReportService;
+    private final DonationMapper donationMapper;
 
     @Autowired
-    public DonationController(DonationService donationService, PaymentService paymentService, DonationReportService donationReportService) {
+    public DonationController(DonationService donationService, PaymentService paymentService, DonationReportService donationReportService,
+                              DonationMapper donationMapper) {
         this.donationService = donationService;
         this.paymentService = paymentService;
         this.donationReportService = donationReportService;
+        this.donationMapper = donationMapper;
     }
     // Tạo donation mới
 //    @PostMapping
@@ -242,6 +251,44 @@ public class DonationController {
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<DonationDTO>> searchDonations(
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) BigDecimal amountFrom,
+            @RequestParam(required = false) BigDecimal amountTo,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size) {
+
+        if ((paymentStatus == null || paymentStatus.isEmpty())) {
+            paymentStatus = "success";
+        }
+
+        LocalDateTime newFrom = parseDate(from);
+        LocalDateTime newTo = parseDate(to);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Donation> donations = donationService.searchDonations(paymentMethod, paymentStatus,newFrom,newTo,amountFrom,amountTo, sortBy, pageable);
+        Page<DonationDTO> projectDTOs = donations.map(donationMapper::toDonationDTO);
+        return ResponseEntity.ok(projectDTOs);
+    }
+
+    private LocalDateTime parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
+
+        try {
+            if (dateStr.length() == 10) { // yyyy-MM-dd
+                return LocalDate.parse(dateStr).atStartOfDay();
+            }
+            return LocalDateTime.parse(dateStr); // full ISO date
+        } catch (Exception e) {
+            return null;
         }
     }
 }
